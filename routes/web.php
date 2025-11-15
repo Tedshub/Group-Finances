@@ -29,20 +29,46 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Relation routes
-    // Route untuk search relation (harus di atas resource routes)
+    Route::resource('relations', RelationController::class);
+
+    // Join & Leave
+    Route::post('/relations/join', [RelationController::class, 'join'])->name('relations.join');
+    Route::delete('/relations/{relation}/leave', [RelationController::class, 'leave'])->name('relations.leave');
     Route::post('/relations/search', [RelationController::class, 'search'])->name('relations.search');
 
-    // Route untuk join relation
-    Route::post('/relations/join', [RelationController::class, 'join'])->name('relations.join');
-
-    // Route untuk leave relation
-    Route::delete('/relations/{relation}/leave', [RelationController::class, 'leave'])->name('relations.leave');
-
-    // Route untuk get members of a relation
+    // Members
     Route::get('/relations/{relation}/members', [RelationController::class, 'members'])->name('relations.members');
+    Route::delete('/relations/{relation}/kick/{user}', [RelationController::class, 'kickMember'])->name('relations.kick-member');
 
-    // Resource routes untuk CRUD relation
-    Route::resource('relations', RelationController::class);
+    // Join Requests - Full Page (Optional)
+    Route::get('/relations/{relation}/pending-requests', [RelationController::class, 'pendingRequests'])
+        ->name('relations.pending-requests');
+
+    // Join Requests - JSON untuk AJAX (Required for Modal)
+    Route::get('/relations/{relation}/pending-requests-json', [RelationController::class, 'pendingRequestsJson'])
+        ->name('relations.pending-requests-json');
+
+    Route::post('/relations/{relation}/requests/{request}/approve', [RelationController::class, 'approveRequest'])
+        ->name('relations.approve-request');
+
+    Route::post('/relations/{relation}/requests/{request}/approve-json', [RelationController::class, 'approveRequestJson'])
+        ->name('relations.approve-request-json');
+
+    Route::post('/relations/{relation}/requests/{request}/reject', [RelationController::class, 'rejectRequest'])
+        ->name('relations.reject-request');
+
+    Route::post('/relations/{relation}/requests/{request}/reject-json', [RelationController::class, 'rejectRequestJson'])
+        ->name('relations.reject-request-json');
+
+    // Cancel own request
+    Route::delete('/relation-requests/{request}/cancel', [RelationController::class, 'cancelRequest'])
+        ->name('relation-requests.cancel');
+
+            // User's own pending requests (JSON untuk AJAX)
+    Route::get('/api/user/pending-requests', [RelationController::class, 'getUserPendingRequests'])
+        ->name('user.pending-requests');
 });
 
 require __DIR__.'/auth.php';
+
+//okee

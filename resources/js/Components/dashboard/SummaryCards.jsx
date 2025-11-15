@@ -26,7 +26,7 @@ export default function SummaryCards() {
       ].map((item, idx) => (
         <div
           key={idx}
-          className="bg-white p-6 rounded-2xl shadow-sm border-2 border-black hover:shadow-lg transition-shadow"
+          className="bg-white p-6 rounded-2xl shadow-sm border border-black hover:shadow-lg transition-shadow"
         >
           <h3 className="text-sm font-medium text-gray-700 mb-2">{item.title}</h3>
           <div className="flex items-end justify-between">

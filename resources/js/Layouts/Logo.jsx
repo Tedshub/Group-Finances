@@ -29,7 +29,7 @@ export default function Logo() {
   return (
     <div className="flex items-center space-x-3">
       <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-        <span className="text-white font-bold text-xl">S</span>
+        <span className="text-white font-bold text-xl">G</span>
       </div>
       <span className="font-bold text-xl text-black tracking-wide">
         {getGreeting()}, {getUserName()}!

@@ -34,7 +34,7 @@ export default function ChartsSection() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       {/* Overview Chart */}
-      <div className="bg-gradient-to-br from-[#c5ffbc] to-[#C8F5C8] p-6 rounded-2xl shadow-sm border-2 border-black">
+      <div className="bg-gradient-to-br from-[#c5ffbc] to-[#C8F5C8] p-6 rounded-2xl shadow-sm border border-black">
         <div className="mb-4">
           <h3 className="text-lg font-serif font-semibold text-black">Overview</h3>
           <p className="text-xs text-gray-700">Q1·2023 ↔ Q4·2023</p>
@@ -78,7 +78,7 @@ export default function ChartsSection() {
       </div>
 
       {/* Traffic Section */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-black">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-black">
         <div className="mb-4 flex justify-between items-start">
           <div>
             <h3 className="text-lg font-serif font-semibold text-black">Traffic</h3>

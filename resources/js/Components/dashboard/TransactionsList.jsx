@@ -10,7 +10,7 @@ export default function TransactionsList() {
   ];
 
   return (
-    <section className="bg-white p-6 rounded-2xl shadow-sm border-2 border-black">
+    <section className="bg-white p-6 rounded-2xl shadow-sm border border-black">
       <h3 className="text-lg font-serif font-semibold text-black mb-4">Recent Transactions</h3>
       <ul className="space-y-3">
         {transactions.map((item, idx) => (

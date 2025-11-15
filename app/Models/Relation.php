@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Relation extends Model
@@ -145,5 +146,35 @@ class Relation extends Model
                 $relation->kode = self::generateUniqueCode();
             }
         });
+    }
+
+    // Tambahkan di dalam class Relation
+
+    /**
+     * Join requests untuk relation ini
+     */
+    public function joinRequests(): HasMany
+    {
+        return $this->hasMany(RelationJoinRequest::class, 'relation_id');
+    }
+
+    /**
+     * Pending join requests
+     */
+    public function pendingJoinRequests(): HasMany
+    {
+        return $this->joinRequests()
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->with('user:id,name,email');
+    }
+
+    /**
+     * Hitung jumlah pending requests
+     */
+    public function getPendingRequestsCountAttribute(): int
+    {
+        return $this->joinRequests()
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->count();
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -276,5 +277,114 @@ class User extends Authenticatable
     public function scopeInactive($query)
     {
         return $query->doesntHave('relations');
+    }
+
+    // Tambahkan method ini di class User (setelah method updateRelationPivot)
+
+    /**
+     * Keluarkan user lain dari relation (hanya untuk owner)
+     *
+     * @param Relation|int $relation
+     * @param User|int $targetUser
+     * @return int
+     */
+    public function kickUserFromRelation($relation, $targetUser): int
+    {
+        $relationId = $relation instanceof Relation ? $relation->id : $relation;
+        $targetUserId = $targetUser instanceof User ? $targetUser->id : $targetUser;
+
+        // Cek apakah current user adalah owner
+        if (!$this->isOwnerOf($relationId)) {
+            throw new \Exception('Hanya owner yang dapat mengeluarkan member.');
+        }
+
+        // Cek apakah target user adalah member (bukan owner)
+        $relationModel = $relation instanceof Relation ? $relation : Relation::findOrFail($relationId);
+        $targetUserPivot = $relationModel->users()
+            ->where('users.id', $targetUserId)
+            ->first();
+
+        if (!$targetUserPivot) {
+            throw new \Exception('User tidak ditemukan di relation ini.');
+        }
+
+        if ($targetUserPivot->pivot->is_owner) {
+            throw new \Exception('Tidak dapat mengeluarkan owner dari relation.');
+        }
+
+        // Keluarkan user
+        return $relationModel->users()->detach($targetUserId);
+    }
+
+    // Tambahkan di dalam class User, setelah method-method yang sudah ada
+
+    /**
+     * Join requests yang dibuat user
+     */
+    public function joinRequests(): HasMany
+    {
+        return $this->hasMany(RelationJoinRequest::class, 'user_id');
+    }
+
+    /**
+     * Pending join requests
+     */
+    public function pendingJoinRequests(): HasMany
+    {
+        return $this->joinRequests()->where('status', RelationJoinRequest::STATUS_PENDING);
+    }
+
+    /**
+     * Request join ke relation (butuh approval)
+     *
+     * @param Relation|int $relation
+     * @param string|null $message
+     * @return RelationJoinRequest
+     */
+    public function requestJoinRelation($relation, ?string $message = null): RelationJoinRequest
+    {
+        $relationId = $relation instanceof Relation ? $relation->id : $relation;
+
+        // Cek apakah sudah join
+        if ($this->hasJoinedRelation($relationId)) {
+            throw new \Exception('Anda sudah bergabung di relation ini.');
+        }
+
+        // Cek apakah sudah punya pending request
+        $pendingRequest = RelationJoinRequest::where('user_id', $this->id)
+            ->where('relation_id', $relationId)
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->first();
+
+        if ($pendingRequest) {
+            throw new \Exception('Anda sudah memiliki request yang pending untuk relation ini.');
+        }
+
+        // SOLUSI: Hapus request lama yang rejected/approved
+        RelationJoinRequest::where('user_id', $this->id)
+            ->where('relation_id', $relationId)
+            ->whereIn('status', [RelationJoinRequest::STATUS_REJECTED, RelationJoinRequest::STATUS_APPROVED])
+            ->delete();
+
+        // Buat request baru
+        return RelationJoinRequest::create([
+            'user_id' => $this->id,
+            'relation_id' => $relationId,
+            'message' => $message,
+            'status' => RelationJoinRequest::STATUS_PENDING,
+        ]);
+    }
+
+    /**
+     * Cek apakah user punya pending request untuk relation
+     */
+    public function hasPendingRequestFor($relation): bool
+    {
+        $relationId = $relation instanceof Relation ? $relation->id : $relation;
+
+        return $this->joinRequests()
+            ->where('relation_id', $relationId)
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->exists();
     }
 }

@@ -1,6 +1,6 @@
 // resources/js/Layouts/Sidebar.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { router, usePage } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import {
   Home,
   BarChart2,
@@ -10,8 +10,8 @@ import {
   Calculator,
   FileText,
   Settings,
-  Menu,
-  X,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
 const menuItems = [
@@ -26,10 +26,11 @@ const menuItems = [
 
 export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isHoverOpen, setIsHoverOpen] = useState(false);
   const [isManualOpen, setIsManualOpen] = useState(false);
   const sidebarRef = useRef(null);
+  const toggleButtonRef = useRef(null);
 
   const { url } = usePage();
 
@@ -37,7 +38,7 @@ export default function Sidebar() {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (!mobile) setIsDropdownOpen(false);
+      if (!mobile) setIsMobileOpen(false);
     };
 
     checkMobile();
@@ -47,59 +48,113 @@ export default function Sidebar() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
+      // Untuk mobile: tutup sidebar jika klik di luar sidebar dan toggle button
+      if (isMobile && isMobileOpen) {
+        if (
+          sidebarRef.current &&
+          !sidebarRef.current.contains(event.target) &&
+          toggleButtonRef.current &&
+          !toggleButtonRef.current.contains(event.target)
+        ) {
+          setIsMobileOpen(false);
+        }
+      }
+
+      // Untuk desktop: reset manual open
+      if (!isMobile && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         setIsManualOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isMobile, isMobileOpen]);
 
   const isDesktopOpen = isHoverOpen || isManualOpen;
 
   const handleNavigate = (path) => {
-    router.visit(path);
-    setIsDropdownOpen(false);
+    if (isMobile) {
+      setIsMobileOpen(false);
+    }
+  };
+
+  const toggleMobileSidebar = () => {
+    setIsMobileOpen(!isMobileOpen);
   };
 
   // === MOBILE MODE ===
   if (isMobile) {
     return (
-      <div
-        className="fixed top-[76px] right-4 z-50 flex flex-col items-end"
-        ref={sidebarRef}
-      >
+      <>
+        {/* Overlay backdrop */}
+        {isMobileOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+            onClick={() => setIsMobileOpen(false)}
+          />
+        )}
+
+        {/* Toggle Button */}
         <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="bg-[#4c72ff] text-white p-2 rounded-lg hover:bg-[#405ecf] transition"
-          style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center" }}
+          ref={toggleButtonRef}
+          onClick={toggleMobileSidebar}
+          className={`fixed top-1/2 -translate-y-1/2 bg-[#4c72ff] text-white p-2 hover:bg-[#405ecf] z-50 shadow-lg border-r border-t border-b border-[#6b87ee] transition-all duration-300 ease-in-out ${
+            isMobileOpen ? "left-64" : "left-0"
+          }`}
+          style={{
+            width: "36px",
+            height: "60px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderTopRightRadius: "30px",
+            borderBottomRightRadius: "30px",
+            borderTopLeftRadius: "0",
+            borderBottomLeftRadius: "0",
+          }}
         >
-          {isDropdownOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMobileOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
         </button>
 
-        <div
-          className={`mt-2 transform transition-all duration-300 origin-top-right ${
-            isDropdownOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+        {/* Sidebar */}
+        <aside
+          ref={sidebarRef}
+          className={`fixed left-0 top-0 h-full w-64 bg-[#4c72ff] shadow-2xl text-gray-100 z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
+            isMobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <ul className="bg-[#4c72ff] rounded-lg shadow-lg border border-[#6b87ee] text-sm w-48 overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-6 border-b border-[#6b87ee]">
+            <h2 className="text-xl font-bold text-white">Menu</h2>
+            <p className="text-xs text-gray-200 mt-1">Couple's Finances</p>
+          </div>
+
+          {/* Menu Items */}
+          <ul className="px-3 mt-4 space-y-1 flex-1 overflow-y-auto">
             {menuItems.map((item, idx) => (
-              <li
-                key={idx}
-                onClick={() => handleNavigate(item.path)}
-                className={`flex items-center gap-3 px-4 py-3 hover:bg-[#6b87ee] cursor-pointer transition-all ${
-                  url === item.path ? "text-white font-semibold bg-[#6b87ee]" : "text-gray-100"
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
+              <li key={idx} onClick={() => handleNavigate(item.path)}>
+                <Link
+                  href={item.path}
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all cursor-pointer touch-manipulation
+                    hover:text-white hover:bg-[#6b87ee] ${
+                      url === item.path
+                        ? "bg-[#6b87ee] text-white font-semibold"
+                        : "text-gray-100"
+                    }`}
+                >
+                  <span className="pointer-events-none">{item.icon}</span>
+                  <span className="text-sm font-medium pointer-events-none">{item.label}</span>
+                </Link>
               </li>
             ))}
           </ul>
-        </div>
-      </div>
+
+          {/* Footer */}
+          <footer className="px-4 py-4 text-xs text-gray-200 text-center border-t border-[#6b87ee]">
+            <p>&copy; Couple's Finances 2025</p>
+          </footer>
+        </aside>
+      </>
     );
   }
 
@@ -115,18 +170,21 @@ export default function Sidebar() {
     >
       <ul className="px-3 mt-6 space-y-1 flex-1 overflow-y-auto min-h-0">
         {menuItems.map((item, idx) => (
-          <li
-            key={idx}
-            onClick={() => handleNavigate(item.path)}
-            className={`flex items-center gap-3 rounded-lg px-3 py-3 transition-all cursor-pointer
-              hover:text-white hover:bg-[#6b87ee] ${
-                url === item.path ? "bg-[#6b87ee] text-white font-semibold" : "text-gray-100"
-              }`}
-          >
-            {item.icon}
-            {isDesktopOpen && (
-              <span className="text-sm font-medium">{item.label}</span>
-            )}
+          <li key={idx} onClick={() => handleNavigate(item.path)}>
+            <Link
+              href={item.path}
+              className={`flex items-center gap-3 rounded-lg px-3 py-3 transition-all cursor-pointer
+                hover:text-white hover:bg-[#6b87ee] ${
+                  url === item.path
+                    ? "bg-[#6b87ee] text-white font-semibold"
+                    : "text-gray-100"
+                }`}
+            >
+              {item.icon}
+              {isDesktopOpen && (
+                <span className="text-sm font-medium">{item.label}</span>
+              )}
+            </Link>
           </li>
         ))}
       </ul>

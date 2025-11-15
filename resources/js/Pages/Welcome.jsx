@@ -12,7 +12,7 @@ export default function Welcome({ auth }) {
         feature1: useRef(null),
         feature2: useRef(null),
         feature3: useRef(null),
-        footer: useRef(null)
+        cta: useRef(null)
     };
 
     useEffect(() => {
@@ -294,9 +294,9 @@ export default function Welcome({ auth }) {
                                     Cocok untuk pengelolaan keuangan keluarga, iuran komunitas, atau kas organisasi.
                                 </p>
                                 <div className="mt-4 flex flex-wrap gap-2">
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Kas RT</span>
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Iuran Komunitas</span>
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Budget Keluarga</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Kas RT</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Iuran Komunitas</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Budget Keluarga</span>
                                 </div>
                             </div>
 
@@ -319,9 +319,9 @@ export default function Welcome({ auth }) {
                                     Sempurna untuk perencanaan keuangan tim, event organisasi, atau pengeluaran rumah tangga.
                                 </p>
                                 <div className="mt-4 flex flex-wrap gap-2">
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Event Planning</span>
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Budget Project</span>
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Rumah Tangga</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Event Planning</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Budget Project</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Rumah Tangga</span>
                                 </div>
                             </div>
 
@@ -344,9 +344,9 @@ export default function Welcome({ auth }) {
                                     Analisis pola pengeluaran kelompok dan buat keputusan finansial yang lebih cerdas.
                                 </p>
                                 <div className="mt-4 flex flex-wrap gap-2">
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Laporan Bulanan</span>
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Analisis Trend</span>
-                                    <span className="bg-[#7c98ff]/20 text-[#7c98ff] px-2 py-1 rounded-full text-xs">Export Data</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Laporan Bulanan</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Analisis Trend</span>
+                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Export Data</span>
                                 </div>
                             </div>
                         </div>
@@ -390,8 +390,14 @@ export default function Welcome({ auth }) {
                 </section>
 
                 {/* CTA Section */}
-                <section className="bg-[#7c98ff] px-4 sm:px-6 lg:px-20 py-16 sm:py-20">
-                    <div className="max-w-4xl mx-auto text-center">
+                <section
+                    ref={sectionRefs.cta}
+                    data-section="cta"
+                    className="bg-[#7c98ff] px-4 sm:px-6 lg:px-20 py-16 sm:py-20"
+                >
+                    <div className={`max-w-4xl mx-auto text-center transition-all duration-1000 ${
+                        visibleSections.cta ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                    }`}>
                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
                             <CollaborationIcon />
                         </div>
@@ -419,13 +425,7 @@ export default function Welcome({ auth }) {
                 </section>
 
                 {/* Footer */}
-                <footer
-                    ref={sectionRefs.footer}
-                    data-section="footer"
-                    className={`bg-[#4c72ff] px-4 sm:px-6 lg:px-20 py-12 sm:py-16 transition-all duration-1000 ${
-                        visibleSections.footer ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-                    }`}
-                >
+                <footer className="bg-[#4c72ff] px-4 sm:px-6 lg:px-20 py-12 sm:py-16">
                     <div className="max-w-7xl w-full mx-auto">
                         <div className="grid md:grid-cols-4 gap-8 sm:gap-12 mb-8">
                             {/* Column 1 - Brand */}
