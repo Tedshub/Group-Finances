@@ -5,6 +5,7 @@ export default function Welcome({ auth }) {
     const [isVisible, setIsVisible] = useState(false);
     const [showButtons, setShowButtons] = useState(false);
     const [visibleSections, setVisibleSections] = useState({});
+    const [showScrollTop, setShowScrollTop] = useState(false);
 
     const sectionRefs = {
         why: useRef(null),
@@ -46,11 +47,31 @@ export default function Welcome({ auth }) {
             }
         });
 
+        // Scroll event listener
+        const handleScroll = () => {
+            const heroSection = document.querySelector('section');
+            if (heroSection) {
+                const heroHeight = heroSection.offsetHeight;
+                setShowScrollTop(window.scrollY > heroHeight);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
         return () => {
             clearTimeout(buttonTimer);
             observer.disconnect();
+            window.removeEventListener('scroll', handleScroll);
         };
     }, []);
+
+    // Function to scroll to top
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
 
     // Icon Components
     const FamilyIcon = () => (
@@ -98,6 +119,12 @@ export default function Welcome({ auth }) {
     const CollaborationIcon = () => (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+    );
+
+    const ScrollToTopIcon = () => (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
         </svg>
     );
 
@@ -512,6 +539,17 @@ export default function Welcome({ auth }) {
                         </div>
                     </div>
                 </footer>
+
+                {/* Scroll to Top Button */}
+                <button
+                    onClick={scrollToTop}
+                    className={`fixed right-8 bottom-1/4 bg-[#7c98ff] text-white p-4 rounded-full shadow-lg hover:bg-[#4c72ff] transition-all duration-300 z-50 hover:scale-110 ${
+                        showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
+                    }`}
+                    aria-label="Scroll to top"
+                >
+                    <ScrollToTopIcon />
+                </button>
             </div>
 
             <style jsx>{`

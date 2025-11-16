@@ -46,6 +46,8 @@ export default function RelationsPage({ auth, relations, flash }) {
   const [searchResult, setSearchResult] = useState(null);
   const [searching, setSearching] = useState(false);
   const [joinedRelation, setJoinedRelation] = useState(null);
+  const [joinSuccess, setJoinSuccess] = useState(false);
+  const [joinSuccessMessage, setJoinSuccessMessage] = useState('');
 
   // Members modal states
   const [selectedRelation, setSelectedRelation] = useState(null);
@@ -175,6 +177,8 @@ export default function RelationsPage({ auth, relations, flash }) {
     setSearching(true);
     setJoinError('');
     setSearchResult(null);
+    setJoinSuccess(false);
+    setJoinSuccessMessage('');
 
     try {
       const response = await axios.post(route('relations.search'), {
@@ -202,12 +206,23 @@ export default function RelationsPage({ auth, relations, flash }) {
 
   const handleJoin = () => {
     router.post(route('relations.join'), { kode: joinKode }, {
-      onSuccess: () => {
+      onSuccess: (page) => {
+        // Set success state and message
+        setJoinSuccess(true);
+        setJoinSuccessMessage(page.props.flash.success || 'Permintaan bergabung berhasil dikirim');
+
+        // Reset form but stay on join tab
         setJoinKode('');
         setSearchResult(null);
-        setActiveTab('list');
+
+        // Refresh pending requests
+        fetchUserPendingRequests();
+
         // Hapus flag refresh agar halaman bisa di-refresh lagi setelah action
         sessionStorage.removeItem('relationsPageRefreshed');
+      },
+      onError: (errors) => {
+        setJoinError(errors.kode || 'Terjadi kesalahan saat mengirim permintaan');
       }
     });
   };
@@ -389,7 +404,7 @@ export default function RelationsPage({ auth, relations, flash }) {
           <main className="flex-1 overflow-y-auto p-4 md:p-6 min-w-0">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-2xl md:text-3xl font-serif font-normal text-black mb-1" style={{ fontFamily: "'Libre Baskerville', serif" }}>
+              <h1 className="text-2xl md:text-3xl font-bold text-black mb-1">
                 Hubungan Keuangan
               </h1>
               <p className="text-gray-600 text-sm">Kelola hubungan keuangan dengan pasangan atau keluarga</p>
@@ -460,6 +475,8 @@ export default function RelationsPage({ auth, relations, flash }) {
                   handleSearch={handleSearch}
                   handleJoin={handleJoin}
                   handleReloadPage={handleReloadPage}
+                  joinSuccess={joinSuccess}
+                  joinSuccessMessage={joinSuccessMessage}
                 />
 
                  {/* Pending Requests List - Right Side */}
@@ -575,5 +592,3 @@ export default function RelationsPage({ auth, relations, flash }) {
     </>
   );
 }
-
-//okee

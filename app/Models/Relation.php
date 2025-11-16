@@ -177,4 +177,60 @@ class Relation extends Model
             ->where('status', RelationJoinRequest::STATUS_PENDING)
             ->count();
     }
+
+    /**
+     * Transaksi yang ada di relation ini
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'relation_id');
+    }
+
+    /**
+     * Transaksi pemasukan di relation ini
+     */
+    public function pemasukan(): HasMany
+    {
+        return $this->transactions()->where('jenis', Transaction::JENIS_PEMASUKAN);
+    }
+
+    /**
+     * Transaksi pengeluaran di relation ini
+     */
+    public function pengeluaran(): HasMany
+    {
+        return $this->transactions()->where('jenis', Transaction::JENIS_PENGELUARAN);
+    }
+
+    /**
+     * Get total pemasukan
+     */
+    public function getTotalPemasukan(): float
+    {
+        return $this->pemasukan()->sum('jumlah');
+    }
+
+    /**
+     * Get total pengeluaran
+     */
+    public function getTotalPengeluaran(): float
+    {
+        return $this->pengeluaran()->sum('jumlah');
+    }
+
+    /**
+     * Get saldo (pemasukan - pengeluaran)
+     */
+    public function getSaldo(): float
+    {
+        return $this->getTotalPemasukan() - $this->getTotalPengeluaran();
+    }
+
+    /**
+     * Get statistik transaksi untuk relation ini
+     */
+    public function getStatistikTransaksi(): array
+    {
+        return Transaction::getStatistik($this->id);
+    }
 }

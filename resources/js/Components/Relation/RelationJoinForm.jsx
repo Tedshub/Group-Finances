@@ -1,7 +1,7 @@
 // resources/js/Components/Relation/RelationJoinForm.jsx
 
 import React from 'react';
-import { AlertCircle, RefreshCw, Clock } from 'lucide-react';
+import { AlertCircle, RefreshCw, Clock, CheckCircle, RotateCcw } from 'lucide-react';
 
 export default function RelationJoinForm({
   joinKode,
@@ -11,7 +11,9 @@ export default function RelationJoinForm({
   searchResult,
   handleSearch,
   handleJoin,
-  handleReloadPage
+  handleReloadPage,
+  joinSuccess,
+  joinSuccessMessage
 }) {
   return (
     <div className="max-w-2xl mx-auto">
@@ -42,6 +44,35 @@ export default function RelationJoinForm({
             </button>
           </div>
         </form>
+
+        {/* Success Notification */}
+        {joinSuccess && (
+          <div className="mb-6 p-4 bg-green-50 border-2 border-green-500 rounded-lg md:rounded-xl">
+            <div className="flex items-start gap-3 mb-4">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-gray-900 font-bold text-sm mb-1">Permintaan Terkirim</p>
+                <p className="text-gray-700 text-sm">{joinSuccessMessage}</p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-green-300 rounded-lg p-3 mb-3">
+              <button
+                onClick={handleReloadPage}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full border border-black font-bold transition-all shadow-lg text-sm touch-manipulation"
+              >
+                <RotateCcw className="w-4 h-4 pointer-events-none" />
+                Silahkan klik untuk merefresh
+              </button>
+            </div>
+
+            <div className="bg-green-100 border border-green-300 rounded-lg p-3">
+              <p className="text-gray-700 text-xs">
+                Setelah Refresh, lihat kembali menu gabung untuk melihat daftar permintaan Anda
+              </p>
+            </div>
+          </div>
+        )}
 
         {joinError && (
           <div className="mb-6 p-4 bg-red-50 border-2 border-red-500 rounded-lg md:rounded-xl">
@@ -77,7 +108,8 @@ export default function RelationJoinForm({
           </div>
         )}
 
-        {searchResult && (
+        {/* Search Result - Only show if not successful join */}
+        {searchResult && !joinSuccess && (
           <div className="mb-6 p-5 bg-blue-50 border border-black rounded-lg md:rounded-2xl">
             <h3 className="font-serif font-normal text-black text-lg md:text-xl mb-2" style={{ fontFamily: "'Libre Baskerville', serif" }}>
               {searchResult.relation.nama}

@@ -2,6 +2,7 @@
 // routes/web.php
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RelationController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Relation routes
+    // Relation routes //
     Route::resource('relations', RelationController::class);
 
     // Join & Leave
@@ -67,6 +68,55 @@ Route::middleware('auth')->group(function () {
             // User's own pending requests (JSON untuk AJAX)
     Route::get('/api/user/pending-requests', [RelationController::class, 'getUserPendingRequests'])
         ->name('user.pending-requests');
+
+    // Transactions routes //
+
+    // Route untuk halaman transaksi utama
+Route::get('/transactions', [TransactionController::class, 'landing'])
+    ->name('transactions.landing');
+    
+     // Transaction CRUD untuk relation tertentu
+    Route::prefix('relations/{relation}')->group(function () {
+
+        // Index - Tampilkan semua transaksi (pemasukan & pengeluaran terpisah)
+        Route::get('/transactions', [TransactionController::class, 'index'])
+            ->name('transactions.index');
+
+        // Store - Tambah transaksi baru
+        Route::post('/transactions', [TransactionController::class, 'store'])
+            ->name('transactions.store');
+
+        // Show - Detail transaksi
+        Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])
+            ->name('transactions.show');
+
+        // Update - Edit transaksi
+        Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])
+            ->name('transactions.update');
+
+        // Destroy - Hapus transaksi (soft delete)
+        Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])
+            ->name('transactions.destroy');
+
+        // Force Destroy - Hapus permanen (admin/owner only)
+        Route::delete('/transactions/{transaction}/force', [TransactionController::class, 'forceDestroy'])
+            ->name('transactions.force-destroy');
+
+        // Restore - Restore soft deleted transaction
+        Route::post('/transactions/{transaction}/restore', [TransactionController::class, 'restore'])
+            ->name('transactions.restore');
+
+        // Download bukti transaksi
+        Route::get('/transactions/{transaction}/download-bukti', [TransactionController::class, 'downloadBukti'])
+            ->name('transactions.download-bukti');
+    });
+
+    // API routes untuk AJAX (optional)
+    Route::prefix('api/relations/{relation}')->group(function () {
+        // Get transactions as JSON
+        Route::get('/transactions-json', [TransactionController::class, 'getTransactionsJson'])
+            ->name('api.transactions.json');
+    });
 });
 
 require __DIR__.'/auth.php';
