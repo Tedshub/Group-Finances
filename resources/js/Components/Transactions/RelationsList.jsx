@@ -69,10 +69,7 @@ export default function RelationsList({ relations, onSelect }) {
                   </p>
                 </div>
               </div>
-              <div className="flex justify-between items-center mt-3">
-                <span className="text-sm" style={{ color: `${currentColor}CC` }}>
-                  {relation.partner_count || 2} Anggota
-                </span>
+              <div className="flex justify-end items-end mt-3">
                 <button
                   className="font-medium text-sm hover:underline transition-all"
                   style={{ color: currentColor }}

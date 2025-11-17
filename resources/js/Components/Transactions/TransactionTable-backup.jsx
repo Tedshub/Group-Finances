@@ -19,33 +19,6 @@ export default function TransactionTable({
   const titleColor = type === 'pemasukan' ? 'text-green-700' : 'text-red-700';
   const amountColor = type === 'pemasukan' ? 'text-green-600' : 'text-red-600';
 
-  const handleDownloadBukti = async (buktiUrl) => {
-    try {
-      // Fetch the file
-      const response = await fetch(buktiUrl);
-      const blob = await response.blob();
-
-      // Extract filename from URL or use default
-      const urlParts = buktiUrl.split('/');
-      const filename = urlParts[urlParts.length - 1] || 'bukti-transaksi';
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      alert('Gagal mengunduh file. Silakan coba lagi.');
-    }
-  };
-
   const renderMobileRow = (transaction) => (
     <tr key={transaction.id} className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -82,15 +55,14 @@ export default function TransactionTable({
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {transaction.bukti_url ? (
-          <button
-            onClick={() => handleDownloadBukti(transaction.bukti_url)}
-            className="text-pink-500 hover:text-pink-700 underline flex items-center gap-1"
+          <a
+            href={transaction.bukti_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-pink-500 hover:text-pink-700"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download Bukti
-          </button>
+            Lihat Bukti
+          </a>
         ) : (
           '-'
         )}
