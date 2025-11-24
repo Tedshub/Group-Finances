@@ -1,5 +1,4 @@
 <?php
-// routes/web.php
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RelationController;
@@ -30,79 +29,79 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // ==================== RELATION ROUTES ====================
-    // Resource routes (index, create, store, show, edit, update, destroy)
-    Route::resource('relations', RelationController::class);
+    // Halaman utama relation - menampilkan owned & joined relations
+    Route::get('/relations', [RelationController::class, 'index'])->name('relations.index');
 
-    // Join & Leave
+    // Membuat relation baru
+    Route::post('/relations', [RelationController::class, 'store'])->name('relations.store');
+
+    // Search relation
+    Route::get('/relations-search', [RelationController::class, 'search'])->name('relations.search');
+
+    // Join relation berdasarkan kode
     Route::post('/relations/join', [RelationController::class, 'join'])->name('relations.join');
-    Route::delete('/relations/{relation}/leave', [RelationController::class, 'leave'])->name('relations.leave');
-    Route::post('/relations/search', [RelationController::class, 'search'])->name('relations.search');
 
-    // Members Management
-    Route::get('/relations/{relation}/members', [RelationController::class, 'members'])->name('relations.members');
-    Route::delete('/relations/{relation}/kick/{user}', [RelationController::class, 'kickMember'])->name('relations.kick-member');
+    // Search relation by code (untuk AJAX search)
+    Route::post('/relations/search-by-code', [RelationController::class, 'searchByCode'])->name('relations.search-by-code');
 
-    // ==================== JOIN REQUEST ROUTES ====================
-    // AJAX JSON endpoint untuk fetch pending requests (tetap JSON karena hanya fetch data)
-    Route::get('/relations/{relation}/pending-requests-json', [RelationController::class, 'pendingRequestsJson'])
+    // Batalkan join request
+    Route::delete('/relations/join-requests/{joinRequest}', [RelationController::class, 'cancelJoinRequest'])
+        ->name('relations.join-requests.cancel');
+
+    // ==================== RELATION SPECIFIC ROUTES ====================
+    // Menampilkan detail relation (dengan statistik)
+    Route::get('/relations/{relation}', [RelationController::class, 'show'])->name('relations.show');
+
+    // Menampilkan halaman edit relation
+    Route::get('/relations/{relation}/edit', [RelationController::class, 'edit'])->name('relations.edit');
+
+    // Update relation
+    Route::patch('/relations/{relation}', [RelationController::class, 'update'])->name('relations.update');
+    Route::put('/relations/{relation}', [RelationController::class, 'update'])->name('relations.update.alt');
+
+    // Hapus relation
+    Route::delete('/relations/{relation}', [RelationController::class, 'destroy'])->name('relations.destroy');
+
+    // Keluar dari relation
+    Route::post('/relations/{relation}/leave', [RelationController::class, 'leave'])
+        ->name('relations.leave');
+
+    // ==================== RELATION MEMBERS ROUTES ====================
+    // Menampilkan daftar member relation
+    Route::get('/relations/{relation}/members', [RelationController::class, 'members'])
+        ->name('relations.members');
+
+    // Get members data via JSON (untuk modal)
+    Route::get('/relations/{relation}/members-data', [RelationController::class, 'getMembersData'])
+        ->name('relations.members-data');
+
+    // Kick member dari relation (owner only)
+    Route::delete('/relations/{relation}/members/{user}', [RelationController::class, 'kickMember'])
+        ->name('relations.kick-member');
+
+    // ==================== RELATION JOIN REQUESTS ROUTES ====================
+    // Get pending requests via JSON (untuk modal)
+    Route::get('/relations/{relation}/pending-requests', [RelationController::class, 'getPendingRequests'])
         ->name('relations.pending-requests-json');
 
-    // User's own pending requests - AJAX (tetap JSON karena hanya fetch data)
-    Route::get('/pending-requests', [RelationController::class, 'getUserPendingRequests'])
-        ->name('relations.user-pending-requests');
-
-    // ⚠️ PERUBAHAN: Approve, Reject, Cancel menggunakan REDIRECT (bukan JSON)
+    // Approve join request (owner only) - menggunakan POST untuk Inertia
     Route::post('/relations/{relation}/requests/{request}/approve', [RelationController::class, 'approveRequest'])
         ->name('relations.approve-request');
 
+    // Reject join request (owner only) - menggunakan POST untuk Inertia
     Route::post('/relations/{relation}/requests/{request}/reject', [RelationController::class, 'rejectRequest'])
         ->name('relations.reject-request');
 
-    Route::delete('/pending-requests/{request}', [RelationController::class, 'cancelRequest'])
-        ->name('relations.cancel-request');
+    // Approve join request (alternatif route)
+    Route::post('/relations/join-requests/{joinRequest}/approve', [RelationController::class, 'approveJoinRequest'])
+        ->name('relations.join-requests.approve');
+
+    // Reject join request (alternatif route)
+    Route::post('/relations/join-requests/{joinRequest}/reject', [RelationController::class, 'rejectJoinRequest'])
+        ->name('relations.join-requests.reject');
 
     // ==================== TRANSACTION ROUTES ====================
-    // Landing page untuk memilih relation
-    Route::get('/transactions', [TransactionController::class, 'landing'])
-        ->name('transactions.landing');
-
-    // Transaction CRUD untuk relation tertentu
-    Route::prefix('relations/{relation}')->group(function () {
-        // Index - Tampilkan semua transaksi (pemasukan & pengeluaran terpisah)
-        Route::get('/transactions', [TransactionController::class, 'index'])
-            ->name('transactions.index');
-
-        // Store - Tambah transaksi baru
-        Route::post('/transactions', [TransactionController::class, 'store'])
-            ->name('transactions.store');
-
-        // Show - Detail transaksi
-        Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])
-            ->name('transactions.show');
-
-        // Update - Edit transaksi
-        Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])
-            ->name('transactions.update');
-
-        // Destroy - Hapus transaksi
-        Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])
-            ->name('transactions.destroy');
-
-        // Preview bukti transaksi (inline/preview di browser)
-        Route::get('/transactions/{transaction}/bukti/preview', [TransactionController::class, 'previewBukti'])
-            ->name('transactions.bukti.preview');
-
-        // Download bukti transaksi
-        Route::get('/transactions/{transaction}/bukti/download', [TransactionController::class, 'downloadBukti'])
-            ->name('transactions.bukti.download');
-    });
-
-    // ==================== API ROUTES (AJAX) ====================
-    Route::prefix('api/relations/{relation}')->group(function () {
-        // Get transactions as JSON
-        Route::get('/transactions-json', [TransactionController::class, 'getTransactionsJson'])
-            ->name('api.transactions.json');
-    });
+    // Tambahkan route untuk TransactionController di sini jika sudah dibuat
 });
 
 require __DIR__.'/auth.php';

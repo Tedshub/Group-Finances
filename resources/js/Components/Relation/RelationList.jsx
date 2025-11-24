@@ -1,5 +1,3 @@
-// resources/js/Components/Relation/RelationList.jsx
-
 import React from 'react';
 import { Users, Plus, Search } from 'lucide-react';
 import RelationItem from './RelationItem';

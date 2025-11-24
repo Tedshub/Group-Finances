@@ -1,3 +1,4 @@
+// resources/js/Components/Relation/SuccessToast.jsx
 import React from 'react';
 import { Check, X } from 'lucide-react';
 

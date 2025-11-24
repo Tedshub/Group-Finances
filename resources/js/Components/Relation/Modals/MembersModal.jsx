@@ -10,18 +10,20 @@ export default function MembersModal({
   show,
   onClose,
   selectedRelation,
-  relationMembers,
-  loadingMembers,
-  membersError,
   currentUserId = null,
-  isOwner = false,
   onMemberKicked = null,
   onRequestHandled = null
 }) {
-  const [activeTab, setActiveTab] = useState(isOwner ? 'requests' : 'members');
+  const [activeTab, setActiveTab] = useState('members');
   const [processing, setProcessing] = useState(null);
   const [showKickConfirm, setShowKickConfirm] = useState(false);
   const [memberToKick, setMemberToKick] = useState(null);
+
+  // States untuk members
+  const [relationMembers, setRelationMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [membersError, setMembersError] = useState('');
+  const [isOwner, setIsOwner] = useState(false);
 
   // States untuk pending requests
   const [pendingRequests, setPendingRequests] = useState([]);
@@ -34,19 +36,56 @@ export default function MembersModal({
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
-  // Reset tab saat modal dibuka
+  // Fetch members data saat modal dibuka
   useEffect(() => {
-    if (show) {
-      setActiveTab(isOwner ? 'requests' : 'members');
+    if (show && selectedRelation) {
+      fetchMembersData();
     }
-  }, [show, isOwner]);
+  }, [show, selectedRelation]);
 
-  // Fetch pending requests saat modal dibuka dan tab requests aktif
+  // Fetch pending requests saat tab requests aktif
   useEffect(() => {
     if (show && selectedRelation && activeTab === 'requests' && isOwner) {
       fetchPendingRequests();
     }
   }, [show, selectedRelation, activeTab, isOwner]);
+
+  // Reset tab saat modal dibuka
+  useEffect(() => {
+    if (show && isOwner) {
+      setActiveTab('requests');
+    } else if (show) {
+      setActiveTab('members');
+    }
+  }, [show, isOwner]);
+
+  const fetchMembersData = async () => {
+    if (!selectedRelation?.id) return;
+
+    setLoadingMembers(true);
+    setMembersError('');
+
+    try {
+      const response = await axios.get(route('relations.members-data', selectedRelation.id));
+
+      if (response.data.members && Array.isArray(response.data.members)) {
+        setRelationMembers(response.data.members);
+        setIsOwner(response.data.is_owner || false);
+      } else {
+        setRelationMembers([]);
+        setIsOwner(false);
+      }
+    } catch (err) {
+      console.error('Error fetching members:', err);
+      if (err.response) {
+        setMembersError(err.response.data.error || 'Gagal memuat data anggota');
+      } else {
+        setMembersError('Tidak dapat terhubung ke server');
+      }
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
 
   const fetchPendingRequests = async () => {
     if (!selectedRelation?.id) return;
@@ -96,6 +135,8 @@ export default function MembersModal({
         preserveScroll: true,
         onSuccess: () => {
           setMemberToKick(null);
+          // Refresh members data
+          fetchMembersData();
           if (onMemberKicked) {
             onMemberKicked(selectedRelation.id);
           }
@@ -115,38 +156,33 @@ export default function MembersModal({
     setMemberToKick(null);
   };
 
-  // Show approve confirmation
   const handleShowApproveConfirm = (request) => {
     setSelectedRequest(request);
     setShowApproveConfirm(true);
   };
 
-  // Show reject confirmation
   const handleShowRejectConfirm = (request) => {
     setSelectedRequest(request);
     setShowRejectConfirm(true);
   };
 
-  // Approve request dengan Inertia
   const handleApproveRequest = () => {
     if (!selectedRequest) return;
 
     setProcessingRequest(selectedRequest.id);
     setShowApproveConfirm(false);
 
+    // PERBAIKAN: Gunakan router.post dengan parameter joinRequest yang benar
     router.post(
-      route('relations.approve-request', {
-        relation: selectedRelation.id,
-        request: selectedRequest.id
-      }),
+      route('relations.join-requests.approve', selectedRequest.id),
       {},
       {
         preserveScroll: true,
         onSuccess: () => {
-          // Refresh pending requests
+          // Refresh both lists
           fetchPendingRequests();
+          fetchMembersData();
 
-          // Refresh members list
           if (onRequestHandled) {
             onRequestHandled(selectedRelation.id);
           }
@@ -164,25 +200,21 @@ export default function MembersModal({
     );
   };
 
-  // Reject request dengan Inertia
   const handleRejectRequest = () => {
     if (!selectedRequest) return;
 
     setProcessingRequest(selectedRequest.id);
     setShowRejectConfirm(false);
 
+    // PERBAIKAN: Gunakan router.post dengan parameter joinRequest yang benar
     router.post(
-      route('relations.reject-request', {
-        relation: selectedRelation.id,
-        request: selectedRequest.id
-      }),
+      route('relations.join-requests.reject', selectedRequest.id),
       {},
       {
         preserveScroll: true,
         onSuccess: () => {
           // Refresh pending requests
           fetchPendingRequests();
-
           setSelectedRequest(null);
         },
         onError: (errors) => {
@@ -273,6 +305,12 @@ export default function MembersModal({
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
                     <p className="text-gray-700 text-sm mb-2 font-medium">Gagal memuat data</p>
                     <p className="text-gray-600 text-sm mb-4">{requestsError}</p>
+                    <button
+                      onClick={fetchPendingRequests}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg border border-black text-sm"
+                    >
+                      Coba Lagi
+                    </button>
                   </div>
                 ) : pendingRequests.length > 0 ? (
                   <div className="space-y-3">
@@ -368,7 +406,12 @@ export default function MembersModal({
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
                     <p className="text-gray-700 text-sm mb-2 font-medium">Gagal memuat data</p>
                     <p className="text-gray-600 text-sm mb-4">{membersError}</p>
-                    <p className="text-gray-500 text-xs">Silakan coba lagi atau hubungi administrator</p>
+                    <button
+                      onClick={fetchMembersData}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg border border-black text-sm"
+                    >
+                      Coba Lagi
+                    </button>
                   </div>
                 ) : relationMembers.length > 0 ? (
                   <div className="space-y-3">

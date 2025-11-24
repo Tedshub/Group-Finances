@@ -16,7 +16,7 @@ import {
 
 const menuItems = [
   { label: "Dashboard", icon: <Home size={20} />, path: "/dashboard" },
-  { label: "Hubungan", icon: <Users size={20} />, path: "/relations" },
+  { label: "Hubungan", icon: <Users size={20} />, path: "/relations", hasNotification: true },
   { label: "Transaksi", icon: <BarChart2 size={20} />, path: "/transactions" },
   { label: "Tabungan", icon: <PiggyBank size={20} />, path: "/savings" },
   { label: "Penganggaran", icon: <Wallet size={20} />, path: "/saving-goals" },
@@ -32,7 +32,8 @@ export default function Sidebar() {
   const sidebarRef = useRef(null);
   const toggleButtonRef = useRef(null);
 
-  const { url } = usePage();
+  const { url, props } = usePage();
+  const pendingRequestsCount = props.pendingRequestsCount || 0;
 
   useEffect(() => {
     const checkMobile = () => {
@@ -126,7 +127,7 @@ export default function Sidebar() {
           {/* Header */}
           <div className="px-4 py-6 border-b border-[#6b87ee]">
             <h2 className="text-xl font-bold text-white">Menu</h2>
-            <p className="text-xs text-gray-200 mt-1">Couple's Finances</p>
+            <p className="text-xs text-gray-200 mt-1">Group Finances</p>
           </div>
 
           {/* Menu Items */}
@@ -135,7 +136,7 @@ export default function Sidebar() {
               <li key={idx} onClick={() => handleNavigate(item.path)}>
                 <Link
                   href={item.path}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all cursor-pointer touch-manipulation
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all cursor-pointer touch-manipulation relative
                     hover:text-white hover:bg-[#6b87ee] ${
                       url === item.path
                         ? "bg-[#6b87ee] text-white font-semibold"
@@ -144,6 +145,11 @@ export default function Sidebar() {
                 >
                   <span className="pointer-events-none">{item.icon}</span>
                   <span className="text-sm font-medium pointer-events-none">{item.label}</span>
+
+                  {/* Badge Notifikasi - Mobile */}
+                  {item.hasNotification && pendingRequestsCount > 0 && (
+                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                  )}
                 </Link>
               </li>
             ))}
@@ -151,47 +157,91 @@ export default function Sidebar() {
 
           {/* Footer */}
           <footer className="px-4 py-4 text-xs text-gray-200 text-center border-t border-[#6b87ee]">
-            <p>&copy; Couple's Finances 2025</p>
+            <p>&copy; Group Finances 2025</p>
           </footer>
         </aside>
+
+        <style jsx>{`
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+              transform: scale(1);
+            }
+            50% {
+              opacity: 0.7;
+              transform: scale(1.1);
+            }
+          }
+
+          .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+        `}</style>
       </>
     );
   }
 
   // === DESKTOP MODE ===
   return (
-    <aside
-      ref={sidebarRef}
-      onMouseEnter={() => setIsHoverOpen(true)}
-      onMouseLeave={() => setIsHoverOpen(false)}
-      className={`flex flex-col transition-all duration-300 bg-[#4c72ff] shadow-lg text-gray-100 ${
-        isDesktopOpen ? "w-64" : "w-20"
-      }`}
-    >
-      <ul className="px-3 mt-6 space-y-1 flex-1 overflow-y-auto min-h-0">
-        {menuItems.map((item, idx) => (
-          <li key={idx} onClick={() => handleNavigate(item.path)}>
-            <Link
-              href={item.path}
-              className={`flex items-center gap-3 rounded-lg px-3 py-3 transition-all cursor-pointer
-                hover:text-white hover:bg-[#6b87ee] ${
-                  url === item.path
-                    ? "bg-[#6b87ee] text-white font-semibold"
-                    : "text-gray-100"
-                }`}
-            >
-              {item.icon}
-              {isDesktopOpen && (
-                <span className="text-sm font-medium">{item.label}</span>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <>
+      <aside
+        ref={sidebarRef}
+        onMouseEnter={() => setIsHoverOpen(true)}
+        onMouseLeave={() => setIsHoverOpen(false)}
+        className={`flex flex-col transition-all duration-300 bg-[#4c72ff] shadow-lg text-gray-100 ${
+          isDesktopOpen ? "w-64" : "w-20"
+        }`}
+      >
+        <ul className="px-3 mt-6 space-y-1 flex-1 overflow-y-auto min-h-0">
+          {menuItems.map((item, idx) => (
+            <li key={idx} onClick={() => handleNavigate(item.path)}>
+              <Link
+                href={item.path}
+                className={`flex items-center gap-3 rounded-lg px-3 py-3 transition-all cursor-pointer relative
+                  hover:text-white hover:bg-[#6b87ee] ${
+                    url === item.path
+                      ? "bg-[#6b87ee] text-white font-semibold"
+                      : "text-gray-100"
+                  }`}
+              >
+                <span className="relative">
+                  {item.icon}
 
-      <footer className="px-4 py-4 text-xs text-gray-200 text-center border-t border-[#6b87ee]">
-        &copy; Couple's Finances 2025
-      </footer>
-    </aside>
+                  {/* Badge Notifikasi - Desktop (icon only) */}
+                  {item.hasNotification && pendingRequestsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#4c72ff] animate-pulse"></span>
+                  )}
+                </span>
+
+                {isDesktopOpen && (
+                  <span className="text-sm font-medium">{item.label}</span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <footer className="px-4 py-4 text-xs text-gray-200 text-center border-t border-[#6b87ee]">
+          &copy; Couple's Finances 2025
+        </footer>
+      </aside>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.7;
+            transform: scale(1.1);
+          }
+        }
+
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
+    </>
   );
 }

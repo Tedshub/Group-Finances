@@ -1,5 +1,3 @@
-// resources/js/Pages/Relations/RelationsPage.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
@@ -17,7 +15,14 @@ import SuccessToast from "../../Components/Relation/SuccessToast";
 import ErrorAlert from "../../Components/Relation/ErrorAlert";
 import RelationSearch from "../../Components/Relation/RelationSearch";
 
-export default function RelationsPage({ auth, relations, flash }) {
+export default function RelationsPage({
+  auth,
+  ownedRelations,
+  joinedRelations,
+  myPendingRequests,
+  incomingRequests,
+  flash
+}) {
   const { props } = usePage();
 
   // Tab state
@@ -58,14 +63,32 @@ export default function RelationsPage({ auth, relations, flash }) {
   const createForm = useForm({
     nama: '',
     deskripsi: '',
-    kode: '',
   });
 
   const editForm = useForm({
     nama: '',
     deskripsi: '',
-    kode: '',
   });
+
+  // Combine owned and joined relations
+  const relations = useMemo(() => {
+    const combined = {
+      data: [
+        ...(ownedRelations?.data || []),
+        ...(joinedRelations?.data || [])
+      ],
+      links: ownedRelations?.links || {},
+      meta: ownedRelations?.meta || {}
+    };
+
+    // Add is_owner property to each relation
+    combined.data = combined.data.map(relation => ({
+      ...relation,
+      is_owner: ownedRelations?.data?.some(r => r.id === relation.id) || false
+    }));
+
+    return combined;
+  }, [ownedRelations, joinedRelations]);
 
   // Filter relations based on search term
   const filteredRelations = useMemo(() => {
@@ -131,7 +154,7 @@ export default function RelationsPage({ auth, relations, flash }) {
           setJoinedRelation({ nama: match[1] });
           setShowJoinSuccessModal(true);
         }
-      } else if (currentFlash.success.includes('Permintaan bergabung')) {
+      } else if (currentFlash.success.includes('Permintaan bergabung') || currentFlash.success.includes('Request join')) {
         // Join request sent successfully
         setSuccessMessage(currentFlash.success);
         setShowSuccessToast(true);
@@ -168,14 +191,14 @@ export default function RelationsPage({ auth, relations, flash }) {
     setJoinSuccessMessage('');
 
     try {
-      const response = await axios.post(route('relations.search'), {
+      const response = await axios.post(route('relations.search-by-code'), {
         kode: joinKode
       });
 
       if (response.data.found) {
         setSearchResult(response.data);
       } else {
-        setJoinError('Relation tidak ditemukan');
+        setJoinError(response.data.error || 'Relation tidak ditemukan');
       }
     } catch (err) {
       console.error('Search error:', err);
@@ -228,7 +251,7 @@ export default function RelationsPage({ auth, relations, flash }) {
   };
 
   const handleLeave = (relation) => {
-    router.delete(route('relations.leave', relation.id), {
+    router.post(route('relations.leave', relation.id), {
       onSuccess: () => {
         setShowLeaveConfirm(null);
         // Hapus flag refresh agar halaman bisa di-refresh lagi setelah action
@@ -242,7 +265,6 @@ export default function RelationsPage({ auth, relations, flash }) {
     editForm.setData({
       nama: relation.nama,
       deskripsi: relation.deskripsi || '',
-      kode: relation.kode,
     });
   };
 
@@ -280,17 +302,17 @@ export default function RelationsPage({ auth, relations, flash }) {
     setShowMembersModal(true);
 
     try {
-      const response = await axios.get(route('relations.members', relation.id));
+      const response = await axios.get(route('relations.members-data', relation.id));
 
-      if (response.data.users && Array.isArray(response.data.users)) {
-        setRelationMembers(response.data.users);
+      if (response.data.members && Array.isArray(response.data.members)) {
+        setRelationMembers(response.data.members);
       } else {
         setMembersError('Format data tidak valid');
       }
     } catch (err) {
       console.error('Error fetching members:', err);
       if (err.response) {
-        setMembersError(err.response.data.error || 'Terjadi kesalahan saat mengambil data anggota');
+        setMembersError(err.response.data.message || 'Terjadi kesalahan saat mengambil data anggota');
       } else {
         setMembersError('Tidak dapat terhubung ke server');
       }
@@ -307,11 +329,11 @@ export default function RelationsPage({ auth, relations, flash }) {
     setMembersError('');
 
     try {
-      const response = await axios.get(route('relations.members', relationId));
+      const response = await axios.get(route('relations.members-data', relationId));
 
-      if (response.data.users && Array.isArray(response.data.users)) {
-        setRelationMembers(response.data.users);
-        console.log('Members refreshed successfully:', response.data.users);
+      if (response.data.members && Array.isArray(response.data.members)) {
+        setRelationMembers(response.data.members);
+        console.log('Members refreshed successfully:', response.data.members);
 
         // Tampilkan toast success
         setSuccessMessage('Member berhasil dikeluarkan');
@@ -323,7 +345,7 @@ export default function RelationsPage({ auth, relations, flash }) {
     } catch (err) {
       console.error('Error refreshing members:', err);
       if (err.response) {
-        setMembersError(err.response.data.error || 'Terjadi kesalahan saat mengambil data anggota');
+        setMembersError(err.response.data.message || 'Terjadi kesalahan saat mengambil data anggota');
       } else {
         setMembersError('Tidak dapat terhubung ke server');
       }
@@ -346,11 +368,11 @@ export default function RelationsPage({ auth, relations, flash }) {
     setMembersError('');
 
     try {
-      const response = await axios.get(route('relations.members', relationId));
+      const response = await axios.get(route('relations.members-data', relationId));
 
-      if (response.data.users && Array.isArray(response.data.users)) {
-        setRelationMembers(response.data.users);
-        console.log('Members refreshed successfully:', response.data.users);
+      if (response.data.members && Array.isArray(response.data.members)) {
+        setRelationMembers(response.data.members);
+        console.log('Members refreshed successfully:', response.data.members);
 
         // Tampilkan toast success
         setSuccessMessage('Permintaan berhasil diproses');
@@ -362,7 +384,7 @@ export default function RelationsPage({ auth, relations, flash }) {
     } catch (err) {
       console.error('Error refreshing members:', err);
       if (err.response) {
-        setMembersError(err.response.data.error || 'Terjadi kesalahan saat mengambil data anggota');
+        setMembersError(err.response.data.message || 'Terjadi kesalahan saat mengambil data anggota');
       } else {
         setMembersError('Tidak dapat terhubung ke server');
       }
@@ -457,7 +479,10 @@ export default function RelationsPage({ auth, relations, flash }) {
                 />
 
                  {/* Pending Requests List - Right Side */}
-                <PendingRequestsList />
+                <PendingRequestsList
+                  myPendingRequests={myPendingRequests}
+                  incomingRequests={incomingRequests}
+                />
               </div>
             )}
           </main>
@@ -550,4 +575,3 @@ export default function RelationsPage({ auth, relations, flash }) {
     </>
   );
 }
-

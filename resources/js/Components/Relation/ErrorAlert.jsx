@@ -1,3 +1,4 @@
+// resources/js/Components/Relation/ErrorAlert.jsx
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 

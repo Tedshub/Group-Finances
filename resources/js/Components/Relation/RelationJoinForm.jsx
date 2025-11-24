@@ -1,5 +1,3 @@
-// resources/js/Components/Relation/RelationJoinForm.jsx
-
 import React from 'react';
 import { AlertCircle, RefreshCw, Clock, CheckCircle } from 'lucide-react';
 

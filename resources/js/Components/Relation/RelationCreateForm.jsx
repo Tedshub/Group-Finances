@@ -1,3 +1,4 @@
+// resources/js/Components/Relation/RelationCreateForm.jsx
 import React from 'react';
 
 export default function RelationCreateForm({ createForm, handleCreate, setActiveTab }) {

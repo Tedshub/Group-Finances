@@ -1,207 +1,224 @@
 <?php
-// app/Http/Controllers/RelationController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Relation;
-use App\Models\User;
 use App\Models\RelationJoinRequest;
-use Illuminate\Http\RedirectResponse;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** @mixin User */
-
 class RelationController extends Controller
 {
     /**
-     * Display a listing of relations.
-     * Menampilkan semua relations yang user ikuti
+     * Menampilkan halaman utama Relation
+     * Menampilkan daftar relation yang dimiliki dan yang di-join
+     *
+     * @param Request $request
+     * @return Response
      */
     public function index(Request $request): Response
     {
-        /** @var User $user */
         $user = Auth::user();
 
-        // Ambil relations dengan pagination
-        $relations = $user->relations()
-            ->with(['creator:id,name,email', 'users:id,name'])
-            ->withCount('users')
-            ->latest('user_relation.join_at')
-            ->paginate(10)
-            ->through(function ($relation) use ($user) {
-                // Pastikan join_at adalah Carbon object
-                $joinAt = is_string($relation->pivot->join_at)
-                    ? Date::parse($relation->pivot->join_at)
-                    : $relation->pivot->join_at;
-
-                // Pastikan created_at adalah Carbon object
-                $createdAt = is_string($relation->created_at)
-                    ? Date::parse($relation->created_at)
-                    : $relation->created_at;
-
-                // Hitung pending requests jika user adalah owner
-                $pendingRequestsCount = 0;
-                if ($relation->pivot->is_owner) {
-                    $pendingRequestsCount = $relation->joinRequests()
-                        ->where('status', RelationJoinRequest::STATUS_PENDING)
-                        ->count();
-                }
-
-                return [
-                    'id' => $relation->id,
-                    'kode' => $relation->kode,
-                    'nama' => $relation->nama,
-                    'deskripsi' => $relation->deskripsi,
-                    'creator' => [
-                        'id' => $relation->creator->id,
-                        'name' => $relation->creator->name,
-                        'email' => $relation->creator->email,
-                    ],
-                    'users_count' => $relation->users_count,
-                    'is_owner' => $relation->pivot->is_owner,
-                    'join_at' => $joinAt->format('d M Y H:i'),
-                    'created_at' => $createdAt->format('d M Y'),
-                    'pending_requests_count' => $pendingRequestsCount,
-                ];
-            });
-
-        return Inertia::render('Relations/RelationsPage', [
-            'relations' => $relations,
-        ]);
-    }
-
-    /**
-     * Show the form for creating a new relation.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Relations/Create');
-    }
-
-    /**
-     * Store a newly created relation in storage.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:100',
-            'deskripsi' => 'nullable|string|max:1000',
-            'kode' => [
-                'nullable',
-                'string',
-                'max:20',
-                'alpha_num',
-                Rule::unique('relations', 'kode'),
-            ],
-        ]);
-
-        /** @var User $user */
-        $user = Auth::user();
-
-        // Buat relation
-        $relation = Relation::create([
-            'kode' => $validated['kode'] ?? Relation::generateUniqueCode(),
-            'nama' => $validated['nama'],
-            'deskripsi' => $validated['deskripsi'] ?? null,
-            'creator_id' => $user->id,
-        ]);
-
-        // Auto-join user sebagai owner
-        $user->relations()->attach($relation->id, [
-            'is_owner' => true,
-            'join_at' => now(),
-        ]);
-
-        return redirect()->route('relations.index')
-            ->with('success', "Relation {$relation->nama} berhasil dibuat! Kode: {$relation->kode}");
-    }
-
-    /**
-     * Display the specified relation.
-     */
-    public function show(Relation $relation): Response
-    {
-        /** @var User $user */
-        $user = Auth::user();
-
-        // Cek apakah user sudah join relation ini dengan cara langsung
-        $isMember = $user->relations()->where('relations.id', $relation->id)->exists();
-        if (!$isMember) {
-            abort(403, 'Anda belum bergabung di relation ini.');
-        }
-
-        // Load relations dengan data lengkap
-        $relation->load([
-            'creator:id,name,email',
-            'users' => function ($query) {
-                $query->withPivot('is_owner', 'join_at')
-                    ->orderByPivot('is_owner', 'desc')
-                    ->orderByPivot('join_at', 'asc');
+        // Relation yang dimiliki (sebagai owner)
+        $ownedRelations = Relation::whereHas('users', function ($query) use ($user) {
+            $query->where('users.id', $user->id)
+                ->where('user_relation.is_owner', true);
+        })
+        ->withCount([
+            'users as member_count',
+            'joinRequests as pending_requests_count' => function ($query) {  // TAMBAHKAN INI
+                $query->where('status', RelationJoinRequest::STATUS_PENDING);
             }
-        ]);
+        ])
+        ->with(['creator:id,name,email'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(10, ['*'], 'owned_page');
 
-        // Pastikan created_at adalah Carbon object
-        $relationCreatedAt = is_string($relation->created_at)
-            ? Date::parse($relation->created_at)
-            : $relation->created_at;
+        // Relation yang di-join (sebagai member, bukan owner)
+        $joinedRelations = Relation::whereHas('users', function ($query) use ($user) {
+            $query->where('users.id', $user->id)
+                  ->where('user_relation.is_owner', false);
+        })
+        ->withCount('users as member_count')
+        ->with(['creator:id,name,email'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(10, ['*'], 'joined_page');
 
-        // Format users data
-        $users = $relation->users->map(function ($user) {
-            // Pastikan join_at adalah Carbon object
-            $joinAt = is_string($user->pivot->join_at)
-                ? Date::parse($user->pivot->join_at)
-                : $user->pivot->join_at;
-
+    // Pending join requests yang dibuat oleh user
+    $myPendingRequests = RelationJoinRequest::where('user_id', $user->id)
+        ->where('status', RelationJoinRequest::STATUS_PENDING)
+        ->with(['relation:id,kode,nama,creator_id', 'relation.creator:id,name,email']) // TAMBAHKAN relation.creator
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($request) {
             return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'is_owner' => $user->pivot->is_owner,
-                'join_at' => $joinAt->format('d M Y H:i'),
+                'id' => $request->id,
+                'relation' => [
+                    'id' => $request->relation->id,
+                    'kode' => $request->relation->kode,
+                    'nama' => $request->relation->nama,
+                    'owner' => $request->relation->creator ? [ // TAMBAHKAN OWNER INFO
+                        'id' => $request->relation->creator->id,
+                        'name' => $request->relation->creator->name,
+                        'email' => $request->relation->creator->email,
+                    ] : null,
+                ],
+                'pesan' => $request->pesan,
+                'created_at' => $request->created_at->format('d M Y, H:i'),
+                'created_at_human' => $request->created_at->diffForHumans(),
             ];
         });
 
-        return Inertia::render('Relations/Show', [
-            'relation' => [
+        // Pending join requests untuk relation yang user sebagai owner
+        $incomingRequests = RelationJoinRequest::whereHas('relation', function ($query) use ($user) {
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id)
+                  ->where('user_relation.is_owner', true);
+            });
+        })
+        ->where('status', RelationJoinRequest::STATUS_PENDING)
+        ->with(['user:id,name,email', 'relation:id,kode,nama'])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($request) {
+            return [
+                'id' => $request->id,
+                'user' => [
+                    'id' => $request->user->id,
+                    'name' => $request->user->name,
+                    'email' => $request->user->email,
+                ],
+                'relation' => [
+                    'id' => $request->relation->id,
+                    'kode' => $request->relation->kode,
+                    'nama' => $request->relation->nama,
+                ],
+                'pesan' => $request->pesan,
+                'created_at' => $request->created_at->format('d M Y, H:i'),
+                'created_at_human' => $request->created_at->diffForHumans(),
+            ];
+        });
+
+        // Format owned relations
+        $ownedRelations->getCollection()->transform(function ($relation) {
+            return [
                 'id' => $relation->id,
                 'kode' => $relation->kode,
                 'nama' => $relation->nama,
                 'deskripsi' => $relation->deskripsi,
+                'member_count' => $relation->member_count,
+                'pending_requests_count' => $relation->pending_requests_count, // TAMBAHKAN INI
                 'creator' => [
-                    'id' => $relation->creator->id,
                     'name' => $relation->creator->name,
                     'email' => $relation->creator->email,
                 ],
-                'users' => $users,
-                'created_at' => $relationCreatedAt->format('d M Y H:i'),
-            ],
-            'is_owner' => $user->relations()->where('relations.id', $relation->id)->wherePivot('is_owner', true)->exists(),
-            'user_id' => $user->id,
+                'created_at' => $relation->created_at->format('d M Y, H:i'),
+                'created_at_human' => $relation->created_at->diffForHumans(),
+            ];
+        });
+
+        // Format joined relations
+        $joinedRelations->getCollection()->transform(function ($relation) {
+            return [
+                'id' => $relation->id,
+                'kode' => $relation->kode,
+                'nama' => $relation->nama,
+                'deskripsi' => $relation->deskripsi,
+                'member_count' => $relation->member_count,
+                'creator' => [
+                    'name' => $relation->creator->name,
+                    'email' => $relation->creator->email,
+                ],
+                'created_at' => $relation->created_at->format('d M Y, H:i'),
+                'created_at_human' => $relation->created_at->diffForHumans(),
+            ];
+        });
+
+        return Inertia::render('Relations/RelationsPage', [
+            'ownedRelations' => $ownedRelations,
+            'joinedRelations' => $joinedRelations,
+            'myPendingRequests' => $myPendingRequests,
+            'incomingRequests' => $incomingRequests,
         ]);
     }
 
     /**
-     * Show the form for editing the specified relation.
+     * Membuat Relation baru
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+
+        // Validasi input
+        $validated = $request->validate([
+            'nama' => [
+                'required',
+                'string',
+                'max:255',
+                // Nama harus unik per user (sebagai creator)
+                Rule::unique('relations', 'nama')->where(function ($query) use ($user) {
+                    return $query->where('creator_id', $user->id);
+                }),
+            ],
+            'deskripsi' => 'nullable|string|max:1000',
+        ], [
+            'nama.required' => 'Nama relation harus diisi.',
+            'nama.unique' => 'Anda sudah memiliki relation dengan nama ini.',
+            'nama.max' => 'Nama relation maksimal 255 karakter.',
+            'deskripsi.max' => 'Deskripsi maksimal 1000 karakter.',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Buat relation baru
+            $relation = Relation::create([
+                'nama' => $validated['nama'],
+                'deskripsi' => $validated['deskripsi'] ?? null,
+                'creator_id' => $user->id,
+            ]);
+
+            // Set user sebagai owner
+            $relation->users()->attach($user->id, [
+                'is_owner' => true,
+                'join_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Relation "' . $relation->nama . '" berhasil dibuat.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Gagal membuat relation. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Menampilkan halaman edit Relation
+     *
+     * @param Relation $relation
+     * @return Response
      */
     public function edit(Relation $relation): Response
     {
-        /** @var User $user */
         $user = Auth::user();
 
-        // Cek apakah user adalah owner dengan cara langsung
-        $isOwner = $user->relations()
-            ->where('relations.id', $relation->id)
-            ->wherePivot('is_owner', true)
-            ->exists();
-
-        if (!$isOwner) {
-            abort(403, 'Hanya owner yang bisa edit relation ini.');
+        // Validasi: hanya owner yang boleh mengedit
+        if (!$relation->isOwnedBy($user)) {
+            return Inertia::render('Error', [
+                'status' => 403,
+                'message' => 'Anda tidak memiliki akses untuk mengedit relation ini.',
+            ]);
         }
 
         return Inertia::render('Relations/Edit', [
@@ -210,497 +227,774 @@ class RelationController extends Controller
                 'kode' => $relation->kode,
                 'nama' => $relation->nama,
                 'deskripsi' => $relation->deskripsi,
+                'created_at' => $relation->created_at->format('d M Y, H:i'),
             ],
         ]);
     }
 
     /**
-     * Update the specified relation in storage.
+     * Mengupdate Relation
+     *
+     * @param Request $request
+     * @param Relation $relation
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, Relation $relation): RedirectResponse
+    public function update(Request $request, Relation $relation)
     {
-        /** @var User $user */
         $user = Auth::user();
 
-        // Cek apakah user adalah owner dengan cara langsung
-        $isOwner = $user->relations()
-            ->where('relations.id', $relation->id)
-            ->wherePivot('is_owner', true)
-            ->exists();
-
-        if (!$isOwner) {
-            abort(403, 'Hanya owner yang bisa update relation ini.');
+        // Validasi: hanya owner yang boleh mengupdate
+        if (!$relation->isOwnedBy($user)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengupdate relation ini.');
         }
 
+        // Validasi input
         $validated = $request->validate([
-            'nama' => 'required|string|max:100',
-            'deskripsi' => 'nullable|string|max:1000',
-            'kode' => [
+            'nama' => [
                 'required',
                 'string',
-                'max:20',
-                'alpha_num',
-                Rule::unique('relations', 'kode')->ignore($relation->id),
+                'max:255',
+                // Nama harus unik per user (kecuali nama sendiri)
+                Rule::unique('relations', 'nama')
+                    ->where(function ($query) use ($user) {
+                        return $query->where('creator_id', $user->id);
+                    })
+                    ->ignore($relation->id),
             ],
+            'deskripsi' => 'nullable|string|max:1000',
+        ], [
+            'nama.required' => 'Nama relation harus diisi.',
+            'nama.unique' => 'Anda sudah memiliki relation dengan nama ini.',
+            'nama.max' => 'Nama relation maksimal 255 karakter.',
+            'deskripsi.max' => 'Deskripsi maksimal 1000 karakter.',
         ]);
 
-        $relation->update($validated);
+        try {
+            $relation->update([
+                'nama' => $validated['nama'],
+                'deskripsi' => $validated['deskripsi'] ?? null,
+            ]);
 
-        return redirect()->route('relations.index')
-            ->with('success', 'Relation berhasil diupdate!');
+            return redirect()->route('relations.index')->with('success', 'Relation "' . $relation->nama . '" berhasil diupdate.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengupdate relation. Silakan coba lagi.');
+        }
     }
 
     /**
-     * Remove the specified relation from storage.
+     * Menghapus Relation
+     *
+     * @param Relation $relation
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(Relation $relation): RedirectResponse
+    public function destroy(Relation $relation)
     {
-        /** @var User $user */
         $user = Auth::user();
 
-        // Cek apakah user adalah owner dengan cara langsung
-        $isOwner = $user->relations()
-            ->where('relations.id', $relation->id)
-            ->wherePivot('is_owner', true)
-            ->exists();
-
-        if (!$isOwner) {
-            abort(403, 'Hanya owner yang bisa delete relation ini.');
+        // Validasi: hanya owner yang boleh menghapus
+        if (!$relation->isOwnedBy($user)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menghapus relation ini.');
         }
 
-        $relationName = $relation->nama;
-        $relation->delete();
+        DB::beginTransaction();
 
-        return redirect()->route('relations.index')
-            ->with('success', "Relation '{$relationName}' berhasil dihapus!");
+        try {
+            $relationName = $relation->nama;
+
+            // Hapus semua join requests terkait
+            RelationJoinRequest::where('relation_id', $relation->id)->delete();
+
+            // Hapus semua membership (user_relation pivot)
+            $relation->users()->detach();
+
+            // Hapus relation
+            $relation->delete();
+
+            DB::commit();
+
+            return redirect()->route('relations.index')->with('success', 'Relation "' . $relationName . '" berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Gagal menghapus relation. Silakan coba lagi.');
+        }
     }
 
     /**
-     * Request join relation dengan kode (butuh approval dari owner)
+     * Join Relation berdasarkan kode
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function join(Request $request): RedirectResponse
+    public function join(Request $request)
     {
+        $user = Auth::user();
+
+        // Validasi input
         $validated = $request->validate([
             'kode' => 'required|string|exists:relations,kode',
-            'message' => 'nullable|string|max:500',
+            'pesan' => 'nullable|string|max:500',
+        ], [
+            'kode.required' => 'Kode relation harus diisi.',
+            'kode.exists' => 'Kode relation tidak ditemukan.',
+            'pesan.max' => 'Pesan maksimal 500 karakter.',
         ]);
 
-        /** @var User $user */
-        $user = Auth::user();
+        // Cari relation berdasarkan kode
         $relation = Relation::where('kode', $validated['kode'])->first();
 
-        // Cek apakah sudah join
-        if ($user->hasJoinedRelation($relation->id)) {
-            return back()->with('error', 'Anda sudah bergabung di relation ini!');
+        // Cek apakah user adalah creator/owner
+        if ($relation->creator_id === $user->id) {
+            return redirect()->back()->with('error', 'Anda tidak bisa join relation milik sendiri.');
         }
 
-        // Cek apakah sudah punya pending request
-        if ($user->hasPendingRequestFor($relation->id)) {
-            return back()->with('error', 'Anda sudah memiliki request yang menunggu approval!');
+        // Cek apakah user sudah menjadi member
+        if ($relation->hasUser($user)) {
+            return redirect()->back()->with('warning', 'Anda sudah menjadi member dari relation ini.');
+        }
+
+        // Cek apakah sudah pernah membuat request dan masih pending
+        $existingRequest = RelationJoinRequest::where('relation_id', $relation->id)
+            ->where('user_id', $user->id)
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->first();
+
+        if ($existingRequest) {
+            return redirect()->back()->with('warning', 'Anda sudah memiliki request join yang masih pending untuk relation ini.');
         }
 
         try {
-            // Buat join request
-            $user->requestJoinRelation($relation->id, $validated['message'] ?? null);
+            // Buat request join baru
+            RelationJoinRequest::create([
+                'relation_id' => $relation->id,
+                'user_id' => $user->id,
+                'pesan' => $validated['pesan'] ?? null,
+                'status' => RelationJoinRequest::STATUS_PENDING,
+            ]);
 
-            return redirect()->route('relations.index')
-                ->with('success', "Permintaan bergabung ke '{$relation->nama}' berhasil dikirim. Menunggu persetujuan dari owner.");
+            return redirect()->route('relations.index')->with('success', 'Request join ke relation "' . $relation->nama . '" berhasil dikirim. Menunggu persetujuan owner.');
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengirim request join. Silakan coba lagi.');
         }
     }
 
     /**
-     * Leave/keluar dari relation
+     * Membatalkan request join
+     *
+     * @param RelationJoinRequest $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function leave(Relation $relation): RedirectResponse
+    public function cancelJoinRequest(RelationJoinRequest $joinRequest)
     {
-        /** @var User $user */
         $user = Auth::user();
 
-        // Cek apakah user join di relation ini dengan cara langsung
-        $isMember = $user->relations()->where('relations.id', $relation->id)->exists();
-        if (!$isMember) {
-            abort(403, 'Anda tidak tergabung di relation ini.');
+        // Validasi: hanya user yang membuat request yang boleh membatalkan
+        if ($joinRequest->user_id !== $user->id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan request ini.');
         }
 
-        // Cek apakah user adalah owner dengan cara langsung
-        $isOwner = $user->relations()
-            ->where('relations.id', $relation->id)
-            ->wherePivot('is_owner', true)
-            ->exists();
-
-        if ($isOwner) {
-            return back()->with('error', 'Owner tidak bisa leave. Silakan delete relation jika ingin menghapus.');
+        // Validasi: hanya pending request yang bisa dibatalkan
+        if ($joinRequest->status !== RelationJoinRequest::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Request ini sudah tidak bisa dibatalkan.');
         }
 
-        $relationName = $relation->nama;
-        $user->relations()->detach($relation->id);
+        try {
+            $relationName = $joinRequest->relation->nama;
+            $joinRequest->delete();
 
-        return redirect()->route('relations.index')
-            ->with('success', "Berhasil keluar dari '{$relationName}'!");
+            return redirect()->back()->with('success', 'Request join ke relation "' . $relationName . '" berhasil dibatalkan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal membatalkan request join. Silakan coba lagi.');
+        }
     }
 
     /**
-     * Search relation by code (untuk join form)
+     * Approve join request (owner only)
+     *
+     * @param RelationJoinRequest $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function search(Request $request): \Illuminate\Http\JsonResponse
+    public function approveJoinRequest(RelationJoinRequest $joinRequest)
     {
-        $validated = $request->validate([
-            'kode' => 'required|string',
-        ]);
+        $user = Auth::user();
+        $relation = $joinRequest->relation;
 
-        $relation = Relation::where('kode', $validated['kode'])
-            ->with('creator:id,name')
-            ->withCount('users')
-            ->first();
-
-        if (!$relation) {
-            return response()->json([
-                'found' => false,
-                'message' => 'Relation tidak ditemukan.',
-            ], 404);
+        // Validasi: hanya owner yang boleh approve
+        if (!$relation->isOwnedBy($user)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk approve request ini.');
         }
 
-        /** @var User $user */
-        $user = Auth::user();
-        $alreadyJoined = $user->hasJoinedRelation($relation->id);
-        $hasPendingRequest = $user->hasPendingRequestFor($relation->id);
+        // Validasi: hanya pending request yang bisa di-approve
+        if ($joinRequest->status !== RelationJoinRequest::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Request ini sudah tidak bisa di-approve.');
+        }
 
-        return response()->json([
-            'found' => true,
-            'already_joined' => $alreadyJoined,
-            'has_pending_request' => $hasPendingRequest,
+        DB::beginTransaction();
+
+        try {
+            // Tambahkan user ke relation sebagai member
+            $relation->users()->attach($joinRequest->user_id, [
+                'is_owner' => false,
+                'join_at' => now(),
+            ]);
+
+            // Update status request menjadi approved
+            $joinRequest->update([
+                'status' => RelationJoinRequest::STATUS_APPROVED,
+                'processed_at' => now(),
+                'processed_by' => $user->id,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Request join dari ' . $joinRequest->user->name . ' berhasil di-approve.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Gagal approve request join. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Reject join request (owner only)
+     *
+     * @param RelationJoinRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function rejectJoinRequest(RelationJoinRequest $joinRequest)
+    {
+        $user = Auth::user();
+        $relation = $joinRequest->relation;
+
+        // Validasi: hanya owner yang boleh reject
+        if (!$relation->isOwnedBy($user)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk reject request ini.');
+        }
+
+        // Validasi: hanya pending request yang bisa di-reject
+        if ($joinRequest->status !== RelationJoinRequest::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Request ini sudah tidak bisa di-reject.');
+        }
+
+        try {
+            // Update status request menjadi rejected
+            $joinRequest->update([
+                'status' => RelationJoinRequest::STATUS_REJECTED,
+                'processed_at' => now(),
+                'processed_by' => $user->id,
+            ]);
+
+            return redirect()->back()->with('success', 'Request join dari ' . $joinRequest->user->name . ' berhasil di-reject.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal reject request join. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Menampilkan daftar member dari relation
+     *
+     * @param Relation $relation
+     * @return Response
+     */
+    public function members(Relation $relation): Response
+    {
+        $user = Auth::user();
+
+        // Validasi: user harus menjadi member dari relation ini
+        if (!$relation->hasUser($user)) {
+            return Inertia::render('Error', [
+                'status' => 403,
+                'message' => 'Anda tidak memiliki akses untuk melihat member relation ini.',
+            ]);
+        }
+
+        // Ambil semua member dengan informasi lengkap
+        $members = $relation->users()
+            ->orderByPivot('is_owner', 'desc')
+            ->orderByPivot('join_at', 'asc')
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'email' => $member->email,
+                    'is_owner' => (bool) $member->pivot->is_owner,
+                    'join_at' => $member->pivot->join_at->format('d M Y, H:i'),
+                    'join_at_human' => $member->pivot->join_at->diffForHumans(),
+                ];
+            });
+
+        $isOwner = $relation->isOwnedBy($user);
+
+        return Inertia::render('Relations/Members', [
             'relation' => [
                 'id' => $relation->id,
                 'kode' => $relation->kode,
                 'nama' => $relation->nama,
                 'deskripsi' => $relation->deskripsi,
-                'creator' => [
-                    'id' => $relation->creator->id,
-                    'name' => $relation->creator->name,
-                ],
-                'users_count' => $relation->users_count,
+                'is_owner' => $isOwner,
             ],
+            'members' => $members,
         ]);
     }
 
     /**
-     * Kick member dari relation (hanya untuk owner)
+     * Mengeluarkan member dari relation (owner only)
+     *
+     * @param Relation $relation
+     * @param int $userId
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function kickMember(Relation $relation, User $user): RedirectResponse
+    public function kickMember(Relation $relation, int $userId)
     {
-        /** @var User $currentUser */
-        $currentUser = Auth::user();
-
-        // Cek apakah current user adalah owner
-        $isOwner = $currentUser->relations()
-            ->where('relations.id', $relation->id)
-            ->wherePivot('is_owner', true)
-            ->exists();
-
-        if (!$isOwner) {
-            abort(403, 'Hanya owner yang bisa mengeluarkan member.');
-        }
-
-        // Cek apakah target user adalah member di relation ini
-        $isMember = $user->relations()
-            ->where('relations.id', $relation->id)
-            ->exists();
-
-        if (!$isMember) {
-            return back()->with('error', 'User tidak terdaftar di relation ini.');
-        }
-
-        // Cek apakah target user adalah owner
-        $isTargetOwner = $user->relations()
-            ->where('relations.id', $relation->id)
-            ->wherePivot('is_owner', true)
-            ->exists();
-
-        if ($isTargetOwner) {
-            return back()->with('error', 'Tidak dapat mengeluarkan owner dari relation.');
-        }
-
-        // Tidak boleh kick diri sendiri
-        if ($currentUser->id === $user->id) {
-            return back()->with('error', 'Tidak dapat mengeluarkan diri sendiri. Gunakan fitur Leave jika ingin keluar.');
-        }
-
-        // Keluarkan user
-        $user->relations()->detach($relation->id);
-
-        return back()->with('success', "{$user->name} berhasil dikeluarkan dari relation.");
-    }
-
-    /**
-     * Get members of a relation (for AJAX requests)
-     */
-    public function members(Relation $relation): \Illuminate\Http\JsonResponse
-    {
-        /** @var User $user */
         $user = Auth::user();
 
-        // Cek apakah user sudah join relation ini dengan cara langsung
-        $isMember = $user->relations()->where('relations.id', $relation->id)->exists();
-        if (!$isMember) {
-            return response()->json([
-                'error' => 'Anda belum bergabung di relation ini.',
-            ], 403);
+        // Validasi: hanya owner yang boleh kick member
+        if (!$relation->isOwnedBy($user)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengeluarkan member dari relation ini.');
         }
 
-        // Load users with pivot data
-        $relation->load([
-            'users' => function ($query) {
-                $query->withPivot('is_owner', 'join_at')
-                    ->orderByPivot('is_owner', 'desc')
-                    ->orderByPivot('join_at', 'asc');
+        // Validasi: tidak boleh kick diri sendiri
+        if ($userId === $user->id) {
+            return redirect()->back()->with('error', 'Anda tidak bisa mengeluarkan diri sendiri. Gunakan fitur "Keluar dari Relation" jika ingin keluar.');
+        }
+
+        // Cek apakah user yang akan di-kick ada di relation
+        if (!$relation->hasUser($userId)) {
+            return redirect()->back()->with('error', 'User tidak ditemukan di relation ini.');
+        }
+
+        try {
+            $kickedUser = \App\Models\User::findOrFail($userId);
+
+            // Hapus membership
+            $relation->users()->detach($userId);
+
+            return redirect()->back()->with('success', 'Member "' . $kickedUser->name . '" berhasil dikeluarkan dari relation.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengeluarkan member. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Keluar dari relation
+     *
+     * @param Relation $relation
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function leave(Relation $relation)
+    {
+        $user = Auth::user();
+
+        // Validasi: user harus menjadi member dari relation ini
+        if (!$relation->hasUser($user)) {
+            return redirect()->back()->with('error', 'Anda bukan member dari relation ini.');
+        }
+
+        $isOwner = $relation->isOwnedBy($user);
+        $totalMembers = $relation->users()->count();
+
+        // Jika user adalah owner dan masih ada member lain
+        if ($isOwner && $totalMembers > 1) {
+            return redirect()->back()->with('error', 'Anda adalah owner relation ini dan masih ada member lain. Silakan keluarkan semua member terlebih dahulu atau hapus relation jika ingin keluar.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $relationName = $relation->nama;
+
+            // Hapus membership
+            $relation->users()->detach($user->id);
+
+            // Jika user adalah owner dan satu-satunya member, hapus relation
+            if ($isOwner && $totalMembers === 1) {
+                // Hapus semua join requests terkait
+                RelationJoinRequest::where('relation_id', $relation->id)->delete();
+
+                // Hapus relation
+                $relation->delete();
+
+                DB::commit();
+
+                return redirect()->route('relations.index')->with('success', 'Anda berhasil keluar dari relation "' . $relationName . '". Relation telah dihapus karena tidak ada member lagi.');
             }
+
+            DB::commit();
+
+            return redirect()->route('relations.index')->with('success', 'Anda berhasil keluar dari relation "' . $relationName . '".');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Gagal keluar dari relation. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Search Relation berdasarkan nama atau kode
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function search(Request $request): Response
+    {
+        $user = Auth::user();
+
+        // Validasi input
+        $validated = $request->validate([
+            'query' => 'required|string|min:2|max:255',
+        ], [
+            'query.required' => 'Kata kunci pencarian harus diisi.',
+            'query.min' => 'Kata kunci pencarian minimal 2 karakter.',
+            'query.max' => 'Kata kunci pencarian maksimal 255 karakter.',
         ]);
 
-        // Format users data
-        $users = $relation->users->map(function ($user) {
-            // Pastikan join_at adalah Carbon object
-            $joinAt = is_string($user->pivot->join_at)
-                ? Date::parse($user->pivot->join_at)
-                : $user->pivot->join_at;
+        $query = $validated['query'];
+
+        // Search relation yang user ikuti (sebagai owner atau member)
+        $results = Relation::whereHas('users', function ($q) use ($user) {
+            $q->where('users.id', $user->id);
+        })
+        ->where(function ($q) use ($query) {
+            $q->where('nama', 'like', '%' . $query . '%')
+              ->orWhere('kode', 'like', '%' . $query . '%');
+        })
+        ->withCount('users as member_count')
+        ->with(['creator:id,name,email'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(15)
+        ->through(function ($relation) use ($user) {
+            $isOwner = $relation->isOwnedBy($user);
 
             return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'is_owner' => $user->pivot->is_owner,
-                'join_at' => $joinAt->diffForHumans(),
+                'id' => $relation->id,
+                'kode' => $relation->kode,
+                'nama' => $relation->nama,
+                'deskripsi' => $relation->deskripsi,
+                'member_count' => $relation->member_count,
+                'is_owner' => $isOwner,
+                'creator' => [
+                    'name' => $relation->creator->name,
+                    'email' => $relation->creator->email,
+                ],
+                'created_at' => $relation->created_at->format('d M Y, H:i'),
+                'created_at_human' => $relation->created_at->diffForHumans(),
             ];
         });
 
-        return response()->json([
-            'success' => true,
-            'users' => $users,
+        return Inertia::render('Relations/Search', [
+            'query' => $query,
+            'results' => $results,
         ]);
     }
 
-    // ==================== JOIN REQUEST MANAGEMENT ====================
-
     /**
-     * Get pending requests as JSON (untuk AJAX di modal)
-     * Route: GET /relations/{relation}/pending-requests-json
+     * Menampilkan detail relation beserta statistik
+     *
+     * @param Relation $relation
+     * @return Response
      */
-    public function pendingRequestsJson(Relation $relation): \Illuminate\Http\JsonResponse
+    public function show(Relation $relation): Response
     {
-        try {
-            /** @var User $user */
-            $user = Auth::user();
+        $user = Auth::user();
 
-            // Cek apakah user adalah owner - gunakan Eloquent relationship
-            $isOwner = $user->relations()
-                ->where('relations.id', $relation->id)
-                ->wherePivot('is_owner', true)
-                ->exists();
-
-            if (!$isOwner) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Hanya owner yang bisa melihat join requests.',
-                    'requests' => []
-                ], 403);
-            }
-
-            $requests = $relation->joinRequests()
-                ->where('status', RelationJoinRequest::STATUS_PENDING)
-                ->with('user:id,name,email')
-                ->latest()
-                ->get()
-                ->map(function ($request) {
-                    $createdAt = is_string($request->created_at)
-                        ? Date::parse($request->created_at)
-                        : $request->created_at;
-
-                    return [
-                        'id' => $request->id,
-                        'user_id' => $request->user->id,
-                        'user_name' => $request->user->name,
-                        'user_email' => $request->user->email,
-                        'message' => $request->message,
-                        'created_at' => $createdAt->diffForHumans(),
-                        'status' => $request->status,
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'requests' => $requests,
+        // Validasi: user harus menjadi member dari relation ini
+        if (!$relation->hasUser($user)) {
+            return Inertia::render('Error', [
+                'status' => 403,
+                'message' => 'Anda tidak memiliki akses untuk melihat detail relation ini.',
             ]);
-        } catch (\Exception $e) {
-            error_log('Error fetching pending requests: ' . $e->getMessage());
+        }
+
+        $isOwner = $relation->isOwnedBy($user);
+
+        // Ambil statistik transaksi
+        $statistik = $relation->getStatistikTransaksi();
+
+        // Ambil transaksi terbaru (10 terakhir)
+        $recentTransactions = $relation->transactions()
+            ->with(['user:id,name,email', 'kategori:id,nama'])
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($transaction) {
+                return [
+                    'id' => $transaction->id,
+                    'jenis' => $transaction->jenis,
+                    'jumlah' => $transaction->jumlah,
+                    'jumlah_formatted' => 'Rp ' . number_format($transaction->jumlah, 0, ',', '.'),
+                    'keterangan' => $transaction->keterangan,
+                    'tanggal' => $transaction->tanggal->format('d M Y'),
+                    'user' => [
+                        'name' => $transaction->user->name,
+                    ],
+                    'kategori' => $transaction->kategori ? [
+                        'nama' => $transaction->kategori->nama,
+                    ] : null,
+                    'created_at' => $transaction->created_at->format('d M Y, H:i'),
+                ];
+            });
+
+        // Ambil member count
+        $memberCount = $relation->users()->count();
+
+        // Pending requests count (untuk owner)
+        $pendingRequestsCount = $isOwner ? $relation->pending_requests_count : 0;
+
+        return Inertia::render('Relations/Show', [
+            'relation' => [
+                'id' => $relation->id,
+                'kode' => $relation->kode,
+                'nama' => $relation->nama,
+                'deskripsi' => $relation->deskripsi,
+                'is_owner' => $isOwner,
+                'member_count' => $memberCount,
+                'pending_requests_count' => $pendingRequestsCount,
+                'creator' => [
+                    'name' => $relation->creator->name,
+                    'email' => $relation->creator->email,
+                ],
+                'created_at' => $relation->created_at->format('d M Y, H:i'),
+                'created_at_human' => $relation->created_at->diffForHumans(),
+            ],
+            'statistik' => [
+                'total_pemasukan' => $statistik['total_pemasukan'],
+                'total_pengeluaran' => $statistik['total_pengeluaran'],
+                'saldo' => $statistik['saldo'],
+                'total_pemasukan_formatted' => 'Rp ' . number_format($statistik['total_pemasukan'], 0, ',', '.'),
+                'total_pengeluaran_formatted' => 'Rp ' . number_format($statistik['total_pengeluaran'], 0, ',', '.'),
+                'saldo_formatted' => 'Rp ' . number_format($statistik['saldo'], 0, ',', '.'),
+                'jumlah_transaksi' => $statistik['jumlah_transaksi'],
+            ],
+            'recentTransactions' => $recentTransactions,
+        ]);
+    }
+
+    /**
+     * Mendapatkan pending requests untuk relation (owner only)
+     * Digunakan oleh MembersModal untuk tab Requests
+     *
+     * @param Relation $relation
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPendingRequests(Relation $relation)
+    {
+        $user = Auth::user();
+
+        // Validasi: hanya owner yang boleh melihat pending requests
+        if (!$relation->isOwnedBy($user)) {
             return response()->json([
-                'success' => false,
-                'error' => 'Gagal memuat permintaan pending',
-                'requests' => []
-            ], 500);
+                'error' => 'Anda tidak memiliki akses untuk melihat permintaan relation ini.'
+            ], 403);
         }
+
+        // Ambil pending requests
+        $requests = RelationJoinRequest::where('relation_id', $relation->id)
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->with(['user:id,name,email'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'user_id' => $request->user->id,
+                    'user_name' => $request->user->name,
+                    'user_email' => $request->user->email,
+                    'message' => $request->pesan,
+                    'created_at' => $request->created_at->diffForHumans(),
+                    'created_at_formatted' => $request->created_at->format('d M Y, H:i'),
+                ];
+            });
+
+        return response()->json([
+            'requests' => $requests
+        ]);
     }
 
     /**
-     * Approve join request (REDIRECT version)
-     * Route: POST /relations/{relation}/requests/{request}/approve
+     * Mendapatkan members untuk relation
+     * Digunakan oleh MembersModal
+     *
+     * @param Relation $relation
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function approveRequest(Relation $relation, RelationJoinRequest $request): RedirectResponse
+    public function getMembersData(Relation $relation)
     {
-        try {
-            /** @var User $user */
-            $user = Auth::user();
+        $user = Auth::user();
 
-            // Cek apakah user adalah owner
-            $isOwner = $user->relations()
-                ->where('relations.id', $relation->id)
-                ->wherePivot('is_owner', true)
-                ->exists();
-
-            if (!$isOwner) {
-                return back()->with('error', 'Hanya owner yang bisa approve request.');
-            }
-
-            // Cek apakah request untuk relation yang benar
-            if ($request->relation_id !== $relation->id) {
-                return back()->with('error', 'Request tidak valid.');
-            }
-
-            // Cek status pending
-            if (!$request->isPending()) {
-                return back()->with('error', 'Request sudah di-review sebelumnya.');
-            }
-
-            // Simpan nama user sebelum approve
-            $userName = $request->user->name;
-
-            // Approve request
-            $request->approve($user);
-
-            return back()->with('success', "{$userName} berhasil diterima sebagai member!");
-        } catch (\Exception $e) {
-            Log::error('Approve request error: ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat menerima permintaan.');
-        }
-    }
-
-    /**
-     * Reject join request (REDIRECT version)
-     * Route: POST /relations/{relation}/requests/{request}/reject
-     */
-    public function rejectRequest(Relation $relation, RelationJoinRequest $request): RedirectResponse
-    {
-        try {
-            /** @var User $user */
-            $user = Auth::user();
-
-            // Cek apakah user adalah owner
-            $isOwner = $user->relations()
-                ->where('relations.id', $relation->id)
-                ->wherePivot('is_owner', true)
-                ->exists();
-
-            if (!$isOwner) {
-                return back()->with('error', 'Hanya owner yang bisa reject request.');
-            }
-
-            // Cek apakah request untuk relation yang benar
-            if ($request->relation_id !== $relation->id) {
-                return back()->with('error', 'Request tidak valid.');
-            }
-
-            // Cek status pending
-            if (!$request->isPending()) {
-                return back()->with('error', 'Request sudah di-review sebelumnya.');
-            }
-
-            // Simpan nama user sebelum reject
-            $userName = $request->user->name;
-
-            // Reject request
-            $request->reject($user);
-
-            return back()->with('success', "Request dari {$userName} ditolak.");
-        } catch (\Exception $e) {
-            Log::error('Reject request error: ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat menolak permintaan.');
-        }
-    }
-
-    /**
-     * Get user's own pending join requests (AJAX)
-     * Route: GET /pending-requests
-     */
-    public function getUserPendingRequests(): \Illuminate\Http\JsonResponse
-    {
-        try {
-            /** @var User $user */
-            $user = Auth::user();
-
-            $requests = RelationJoinRequest::where('user_id', $user->id)
-                ->where('status', RelationJoinRequest::STATUS_PENDING)
-                ->with(['relation' => function ($query) {
-                    $query->with('creator:id,name');
-                }])
-                ->latest()
-                ->get()
-                ->map(function ($request) {
-                    $createdAt = is_string($request->created_at)
-                        ? Date::parse($request->created_at)
-                        : $request->created_at;
-
-                    return [
-                        'id' => $request->id,
-                        'relation_id' => $request->relation->id,
-                        'relation_name' => $request->relation->nama,
-                        'relation_code' => $request->relation->kode,
-                        'relation_owner' => $request->relation->creator->name ?? 'Unknown',
-                        'message' => $request->message,
-                        'status' => $request->status,
-                        'created_at' => $createdAt->format('d M Y H:i'),
-                        'created_at_human' => $createdAt->diffForHumans(),
-                    ];
-                });
-
+        // Validasi: user harus menjadi member dari relation ini
+        if (!$relation->hasUser($user)) {
             return response()->json([
-                'success' => true,
-                'data' => $requests,
+                'error' => 'Anda tidak memiliki akses untuk melihat member relation ini.'
+            ], 403);
+        }
+
+        // Ambil semua member dengan informasi lengkap
+        $members = $relation->users()
+            ->orderByPivot('is_owner', 'desc')
+            ->orderByPivot('join_at', 'asc')
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'email' => $member->email,
+                    'is_owner' => (bool) $member->pivot->is_owner,
+                    'join_at' => $member->pivot->join_at->diffForHumans(),
+                    'join_at_formatted' => $member->pivot->join_at->format('d M Y, H:i'),
+                ];
+            });
+
+        return response()->json([
+            'members' => $members,
+            'is_owner' => $relation->isOwnedBy($user)
+        ]);
+    }
+
+    /**
+     * Approve join request dengan POST request (untuk Inertia)
+     *
+     * @param Request $request
+     * @param Relation $relation
+     * @param RelationJoinRequest $joinRequest
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function approveRequest(Request $request, Relation $relation, RelationJoinRequest $joinRequest)
+    {
+        $user = Auth::user();
+
+        // Validasi: hanya owner yang boleh approve
+        if (!$relation->isOwnedBy($user)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk approve request ini.');
+        }
+
+        // Validasi: request harus untuk relation ini
+        if ($joinRequest->relation_id !== $relation->id) {
+            return redirect()->back()->with('error', 'Request tidak valid untuk relation ini.');
+        }
+
+        // Validasi: hanya pending request yang bisa di-approve
+        if ($joinRequest->status !== RelationJoinRequest::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Request ini sudah tidak bisa di-approve.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Tambahkan user ke relation sebagai member
+            $relation->users()->attach($joinRequest->user_id, [
+                'is_owner' => false,
+                'join_at' => now(),
             ]);
+
+            // Update status request menjadi approved
+            $joinRequest->update([
+                'status' => RelationJoinRequest::STATUS_APPROVED,
+                'processed_at' => now(),
+                'processed_by' => $user->id,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Request dari ' . $joinRequest->user->name . ' berhasil diterima.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memuat permintaan pending'
-            ], 500);
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menerima request. Silakan coba lagi.');
         }
     }
 
     /**
-     * Cancel join request (REDIRECT version)
-     * Route: DELETE /pending-requests/{request}
+     * Reject join request dengan POST request (untuk Inertia)
+     *
+     * @param Request $request
+     * @param Relation $relation
+     * @param RelationJoinRequest $joinRequest
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function cancelRequest(RelationJoinRequest $request): RedirectResponse
+    public function rejectRequest(Request $request, Relation $relation, RelationJoinRequest $joinRequest)
     {
-        try {
-            /** @var User $user */
-            $user = Auth::user();
+        $user = Auth::user();
 
-            // Cek apakah request milik user
-            if ($request->user_id !== $user->id) {
-                return back()->with('error', 'Anda tidak bisa cancel request orang lain.');
-            }
-
-            // Hanya bisa cancel jika masih pending
-            if (!$request->isPending()) {
-                return back()->with('error', 'Request sudah di-review dan tidak bisa dibatalkan.');
-            }
-
-            $relationName = $request->relation->nama;
-            $request->delete();
-
-            return back()->with('success', "Request join ke '{$relationName}' berhasil dibatalkan.");
-        } catch (\Exception $e) {
-            Log::error('Cancel request error: ' . $e->getMessage());
-            return back()->with('error', 'Gagal membatalkan permintaan.');
+        // Validasi: hanya owner yang boleh reject
+        if (!$relation->isOwnedBy($user)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menolak request ini.');
         }
+
+        // Validasi: request harus untuk relation ini
+        if ($joinRequest->relation_id !== $relation->id) {
+            return redirect()->back()->with('error', 'Request tidak valid untuk relation ini.');
+        }
+
+        // Validasi: hanya pending request yang bisa di-reject
+        if ($joinRequest->status !== RelationJoinRequest::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Request ini sudah tidak bisa ditolak.');
+        }
+
+        try {
+            // Update status request menjadi rejected
+            $joinRequest->update([
+                'status' => RelationJoinRequest::STATUS_REJECTED,
+                'processed_at' => now(),
+                'processed_by' => $user->id,
+            ]);
+
+            return redirect()->back()->with('success', 'Request dari ' . $joinRequest->user->name . ' berhasil ditolak.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menolak request. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Search relation by code for joining
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function searchByCode(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'kode' => 'required|string|exists:relations,kode'
+        ]);
+
+        $relation = Relation::where('kode', $request->kode)
+            ->withCount('users as users_count')
+            ->with(['creator:id,name,email'])
+            ->first();
+
+        if (!$relation) {
+            return response()->json([
+                'found' => false,
+                'error' => 'Relation tidak ditemukan'
+            ]);
+        }
+
+        // Check if user is already a member
+        $alreadyJoined = $relation->hasUser($user);
+
+        // Check if user has pending request
+        $hasPendingRequest = RelationJoinRequest::where('relation_id', $relation->id)
+            ->where('user_id', $user->id)
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->exists();
+
+        return response()->json([
+            'found' => true,
+            'relation' => [
+                'id' => $relation->id,
+                'kode' => $relation->kode,
+                'nama' => $relation->nama,
+                'deskripsi' => $relation->deskripsi,
+                'users_count' => $relation->users_count,
+                'creator' => [
+                    'name' => $relation->creator->name,
+                    'email' => $relation->creator->email,
+                ]
+            ],
+            'already_joined' => $alreadyJoined,
+            'has_pending_request' => $hasPendingRequest
+        ]);
     }
 }
