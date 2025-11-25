@@ -1,6 +1,6 @@
 // resources/js/Layouts/Sidebar.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Link, usePage } from "@inertiajs/react";
+import { Link, usePage, router } from "@inertiajs/react";
 import {
   Home,
   BarChart2,
@@ -12,16 +12,17 @@ import {
   Settings,
   ChevronRight,
   ChevronLeft,
+  Clock,
 } from "lucide-react";
 
 const menuItems = [
   { label: "Dashboard", icon: <Home size={20} />, path: "/dashboard" },
   { label: "Hubungan", icon: <Users size={20} />, path: "/relations", hasNotification: true },
-  { label: "Transaksi", icon: <BarChart2 size={20} />, path: "/transactions" },
-  { label: "Tabungan", icon: <PiggyBank size={20} />, path: "/savings" },
-  { label: "Penganggaran", icon: <Wallet size={20} />, path: "/saving-goals" },
-  { label: "Laporan Keuangan", icon: <FileText size={20} />, path: "/statements" },
-  { label: "Pengaturan", icon: <Settings size={20} />, path: "/settings" },
+  { label: "Transaksi", icon: <BarChart2 size={20} />, path: "/transactions", comingSoon: true },
+  { label: "Tabungan", icon: <PiggyBank size={20} />, path: "/savings", comingSoon: true },
+  { label: "Penganggaran", icon: <Wallet size={20} />, path: "/saving-goals", comingSoon: true },
+  { label: "Laporan Keuangan", icon: <FileText size={20} />, path: "/statements", comingSoon: true },
+  { label: "Pengaturan", icon: <Settings size={20} />, path: "/settings", comingSoon: true },
 ];
 
 export default function Sidebar() {
@@ -73,7 +74,15 @@ export default function Sidebar() {
 
   const isDesktopOpen = isHoverOpen || isManualOpen;
 
-  const handleNavigate = (path) => {
+  const handleNavigate = (path, isComingSoon) => {
+    if (isComingSoon) {
+      // Jika fitur coming soon, arahkan ke halaman coming soon dengan parameter
+      router.visit(`/coming-soon?feature=${path.substring(1)}`);
+    } else {
+      // Jika fitur sudah tersedia, navigasi normal
+      router.visit(path);
+    }
+
     if (isMobile) {
       setIsMobileOpen(false);
     }
@@ -133,9 +142,8 @@ export default function Sidebar() {
           {/* Menu Items */}
           <ul className="px-3 mt-4 space-y-1 flex-1 overflow-y-auto">
             {menuItems.map((item, idx) => (
-              <li key={idx} onClick={() => handleNavigate(item.path)}>
-                <Link
-                  href={item.path}
+              <li key={idx} onClick={() => handleNavigate(item.path, item.comingSoon)}>
+                <div
                   className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all cursor-pointer touch-manipulation relative
                     hover:text-white hover:bg-[#6b87ee] ${
                       url === item.path
@@ -143,14 +151,28 @@ export default function Sidebar() {
                         : "text-gray-100"
                     }`}
                 >
-                  <span className="pointer-events-none">{item.icon}</span>
+                  <span className="pointer-events-none relative">
+                    {item.icon}
+
+                    {/* Badge Coming Soon - Mobile */}
+                    {item.comingSoon && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-[#4c72ff]"></span>
+                    )}
+                  </span>
                   <span className="text-sm font-medium pointer-events-none">{item.label}</span>
 
                   {/* Badge Notifikasi - Mobile */}
                   {item.hasNotification && pendingRequestsCount > 0 && (
                     <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                   )}
-                </Link>
+
+                  {/* Coming Soon Badge - Mobile */}
+                  {item.comingSoon && (
+                    <span className="ml-auto text-xs bg-yellow-400 text-[#4c72ff] px-2 py-0.5 rounded-full font-medium">
+                      Coming Soon
+                    </span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -194,9 +216,8 @@ export default function Sidebar() {
       >
         <ul className="px-3 mt-6 space-y-1 flex-1 overflow-y-auto min-h-0">
           {menuItems.map((item, idx) => (
-            <li key={idx} onClick={() => handleNavigate(item.path)}>
-              <Link
-                href={item.path}
+            <li key={idx} onClick={() => handleNavigate(item.path, item.comingSoon)}>
+              <div
                 className={`flex items-center gap-3 rounded-lg px-3 py-3 transition-all cursor-pointer relative
                   hover:text-white hover:bg-[#6b87ee] ${
                     url === item.path
@@ -211,18 +232,32 @@ export default function Sidebar() {
                   {item.hasNotification && pendingRequestsCount > 0 && (
                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#4c72ff] animate-pulse"></span>
                   )}
+
+                  {/* Badge Coming Soon - Desktop (icon only) */}
+                  {item.comingSoon && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-[#4c72ff]"></span>
+                  )}
                 </span>
 
                 {isDesktopOpen && (
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <>
+                    <span className="text-sm font-medium">{item.label}</span>
+
+                    {/* Coming Soon Badge - Desktop (text only) */}
+                    {item.comingSoon && (
+                      <span className="ml-auto text-xs bg-yellow-400 text-[#4c72ff] px-2 py-0.5 rounded-full font-medium">
+                        Coming Soon
+                      </span>
+                    )}
+                  </>
                 )}
-              </Link>
+              </div>
             </li>
           ))}
         </ul>
 
         <footer className="px-4 py-4 text-xs text-gray-200 text-center border-t border-[#6b87ee]">
-          &copy; Couple's Finances 2025
+          &copy; Group Finances 2025
         </footer>
       </aside>
 

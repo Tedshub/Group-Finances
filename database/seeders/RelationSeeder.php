@@ -22,7 +22,7 @@ class RelationSeeder extends Seeder
                 'kode' => 'STUDY2025',
                 'nama' => 'Study Group Laravel',
                 'deskripsi' => 'Grup belajar Laravel untuk pemula dan menengah',
-                'creator_id' => 1, // Tedy
+                'creator_id' => 2, // Tedy
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -30,7 +30,7 @@ class RelationSeeder extends Seeder
                 'kode' => 'PROJECT01',
                 'nama' => 'Project Team Alpha',
                 'deskripsi' => 'Tim project development aplikasi e-commerce',
-                'creator_id' => 1, // Tedy
+                'creator_id' => 3, // Tedy
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -38,7 +38,7 @@ class RelationSeeder extends Seeder
                 'kode' => 'WORKOUT2025',
                 'nama' => 'Fitness Buddies',
                 'deskripsi' => 'Komunitas olahraga dan hidup sehat',
-                'creator_id' => 2, // Potat
+                'creator_id' => 4, // Potat
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -46,7 +46,7 @@ class RelationSeeder extends Seeder
                 'kode' => 'COOK123',
                 'nama' => 'Cooking Club',
                 'deskripsi' => 'Berbagi resep dan tips masak',
-                'creator_id' => 3, // Sari
+                'creator_id' => 2, // Sari
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -54,7 +54,7 @@ class RelationSeeder extends Seeder
                 'kode' => 'GAME2025',
                 'nama' => 'Gaming Squad',
                 'deskripsi' => 'Main game bareng dan turnamen',
-                'creator_id' => 2, // Potat
+                'creator_id' => 3, // Potat
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

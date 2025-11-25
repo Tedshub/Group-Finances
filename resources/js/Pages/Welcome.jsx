@@ -443,7 +443,7 @@ export default function Welcome({ auth }) {
                                 {auth?.user ? "Buka Dashboard" : "Daftar Sekarang"}
                             </Link>
                             <Link
-                                href="/features"
+                                href="/coming-soon"
                                 className="bg-transparent text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white hover:bg-white hover:text-[#7c98ff] transition-all duration-300"
                             >
                                 Pelajari Fitur

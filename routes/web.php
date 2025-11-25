@@ -7,6 +7,81 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// resources/js/routes/web.php
+Route::get('/coming-soon', function () {
+    $feature = request('feature', 'default');
+
+    $title = "Segera Hadir";
+    $description = "Kami sedang mempersiapkan sesuatu yang luar biasa untuk Anda. Fitur baru yang akan merevolusi cara Anda mengelola keuangan kelompok.";
+    $featureTitle = "Apa yang Akan Datang?";
+    $features = [
+        'Integrasi dengan bank lokal Indonesia',
+        'Notifikasi real-time untuk setiap transaksi',
+        'Dashboard analytics yang lebih powerful',
+        'Mobile app untuk iOS & Android'
+    ];
+
+    if ($feature === 'transactions') {
+        $title = "Fitur Transaksi Segera Hadir";
+        $description = "Kami sedang mengembangkan fitur transaksi yang akan memudahkan Anda melacak semua pemasukan dan pengeluaran kelompok dengan lebih efisien.";
+        $featureTitle = "Fitur Transaksi Akan Memiliki:";
+        $features = [
+            'Pencatatan transaksi otomatis dan manual',
+            'Kategorisasi transaksi yang mudah',
+            'Laporan transaksi harian, mingguan, dan bulanan',
+            'Filter dan pencarian transaksi yang canggih'
+        ];
+    } else if ($feature === 'savings') {
+        $title = "Fitur Tabungan Segera Hadir";
+        $description = "Kami sedang mempersiapkan fitur tabungan yang akan membantu kelompok Anda mencapai tujuan keuangan bersama.";
+        $featureTitle = "Fitur Tabungan Akan Memiliki:";
+        $features = [
+            'Target tabungan kelompok yang dapat disesuaikan',
+            'Kontribusi otomatis dari anggota',
+            'Visualisasi progres tabungan yang menarik',
+            'Notifikasi pencapaian milestone'
+        ];
+    } else if ($feature === 'saving-goals') {
+        $title = "Fitur Penganggaran Segera Hadir";
+        $description = "Kami sedang mengembangkan fitur penganggaran yang akan membantu kelompok Anda merencanakan dan mengelola anggaran dengan lebih baik.";
+        $featureTitle = "Fitur Penganggaran Akan Memiliki:";
+        $features = [
+            'Pembuatan anggaran kategori yang fleksibel',
+            'Perbandingan anggaran vs realisasi',
+            'Sistem persetujuan untuk pengeluaran besar',
+            'Rekomendasi penghematan berdasarkan pola pengeluaran'
+        ];
+    } else if ($feature === 'statements') {
+        $title = "Fitur Laporan Keuangan Segera Hadir";
+        $description = "Kami sedang mempersiapkan fitur laporan keuangan yang akan memberikan insight mendalam tentang kondisi finansial kelompok Anda.";
+        $featureTitle = "Fitur Laporan Keuangan Akan Memiliki:";
+        $features = [
+            'Laporan keuangan bulanan dan tahunan',
+            'Visualisasi data dengan grafik interaktif',
+            'Ekspor laporan ke format PDF dan Excel',
+            'Analisis tren pengeluaran dan pemasukan'
+        ];
+    } else if ($feature === 'settings') {
+        $title = "Fitur Pengaturan Segera Hadir";
+        $description = "Kami sedang mengembangkan fitur pengaturan yang akan memungkinkan Anda menyesuaikan aplikasi sesuai kebutuhan kelompok Anda.";
+        $featureTitle = "Fitur Pengaturan Akan Memiliki:";
+        $features = [
+            'Manajemen profil kelompok dan anggota',
+            'Pengaturan preferensi notifikasi',
+            'Kustomisasi tema dan tampilan',
+            'Pengaturan privasi dan keamanan data'
+        ];
+    }
+
+    return inertia('ComingSoonPage', [
+        'title' => $title,
+        'description' => $description,
+        'featureTitle' => $featureTitle,
+        'features' => $features
+    ]);
+});
+// })->middleware('auth');
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -45,8 +120,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/relations/search-by-code', [RelationController::class, 'searchByCode'])->name('relations.search-by-code');
 
     // Batalkan join request
-    Route::delete('/relations/join-requests/{joinRequest}', [RelationController::class, 'cancelJoinRequest'])
-        ->name('relations.join-requests.cancel');
+    // Route::delete('/relations/join-requests/{joinRequest}', [RelationController::class, 'cancelJoinRequest'])
+    //     ->name('relations.join-requests.cancel');
+    Route::delete('/relations/join-requests/{request}', [RelationController::class, 'cancelJoinRequest'])
+    ->name('relations.join-requests.cancel');
 
     // ==================== RELATION SPECIFIC ROUTES ====================
     // Menampilkan detail relation (dengan statistik)

@@ -29,7 +29,7 @@ export default function RelationSearch({
         </div>
         <input
           type="text"
-          className="block w-full pl-10 pr-10 py-3 border border-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
+          className="block w-full pl-10 pr-10 py-3 border border-black rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
           placeholder={placeholder}
           value={searchTerm}
           onChange={handleChange}

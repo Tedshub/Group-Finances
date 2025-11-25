@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
+import { Plus } from 'lucide-react';
 import Sidebar from "../../Layouts/Sidebar";
 import NavbarIn from "../../Layouts/NavbarIn";
 import RelationTabs from "../../Components/Relation/RelationTabs";
 import RelationList from "../../Components/Relation/RelationList";
-import RelationCreateForm from "../../Components/Relation/RelationCreateForm";
+import CreateRelationModal from "../../Components/Relation/Modals/CreateRelationModal";
 import RelationJoinForm from "../../Components/Relation/RelationJoinForm";
 import PendingRequestsList from "../../Components/Relation/PendingRequestsList";
 import ConfirmationModal from "../../Components/Relation/Modals/ConfirmationModal";
@@ -32,17 +33,20 @@ export default function RelationsPage({
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(null);
   const [showJoinSuccessModal, setShowJoinSuccessModal] = useState(false);
   const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
+  const [showLeaveSuccessModal, setShowLeaveSuccessModal] = useState(false);
 
   // UI states
   const [copied, setCopied] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [leftRelation, setLeftRelation] = useState(null);
 
   // Join form states
   const [joinKode, setJoinKode] = useState('');
@@ -63,11 +67,13 @@ export default function RelationsPage({
   const createForm = useForm({
     nama: '',
     deskripsi: '',
+    kode: '',
   });
 
   const editForm = useForm({
     nama: '',
     deskripsi: '',
+    kode: '',
   });
 
   // Combine owned and joined relations
@@ -92,13 +98,9 @@ export default function RelationsPage({
 
   // Filter relations based on search term
   const filteredRelations = useMemo(() => {
-    // Jika tidak ada searchTerm, kembalikan relations asli
     if (!searchTerm) return relations;
 
-    // Buat salinan objek relations
     const filteredRelationsObj = { ...relations };
-
-    // Filter data array di dalam relations
     filteredRelationsObj.data = relations.data.filter(relation =>
       relation.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
       relation.kode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -113,18 +115,13 @@ export default function RelationsPage({
     const hasRefreshed = sessionStorage.getItem('relationsPageRefreshed');
 
     if (!hasRefreshed) {
-      // Set flag bahwa halaman sudah di-refresh
       sessionStorage.setItem('relationsPageRefreshed', 'true');
-
-      // Reload halaman setelah delay singkat
       setTimeout(() => {
         window.location.reload();
       }, 100);
     }
 
-    // Cleanup: hapus flag saat component unmount (user meninggalkan halaman)
     return () => {
-      // Hapus flag saat user navigasi ke halaman lain
       const handleBeforeUnload = () => {
         sessionStorage.removeItem('relationsPageRefreshed');
       };
@@ -155,12 +152,23 @@ export default function RelationsPage({
           setShowJoinSuccessModal(true);
         }
       } else if (currentFlash.success.includes('Permintaan bergabung') || currentFlash.success.includes('Request join')) {
-        // Join request sent successfully
         setSuccessMessage(currentFlash.success);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 5000);
       } else if (currentFlash.success.includes('Relation berhasil diupdate')) {
         setShowEditSuccessModal(true);
+      } else if (currentFlash.success.includes('keluar dari') || currentFlash.success.includes('left')) {
+        // Handle success leave message
+        const match = currentFlash.success.match(/keluar dari '(.+?)'/i) ||
+                     currentFlash.success.match(/left '(.+?)'/i);
+        if (match) {
+          setLeftRelation({ nama: match[1] });
+          setShowLeaveSuccessModal(true);
+        } else {
+          setSuccessMessage(currentFlash.success);
+          setShowSuccessToast(true);
+          setTimeout(() => setShowSuccessToast(false), 5000);
+        }
       } else {
         setSuccessMessage(currentFlash.success);
         setShowSuccessToast(true);
@@ -170,17 +178,20 @@ export default function RelationsPage({
   }, [props.flash, flash]);
 
   // Handlers
-  const handleCreate = (e) => {
-    e.preventDefault();
-    createForm.post(route('relations.store'), {
-      onSuccess: () => {
-        createForm.reset();
-        setActiveTab('list');
-        // Hapus flag refresh agar halaman bisa di-refresh lagi setelah action
-        sessionStorage.removeItem('relationsPageRefreshed');
-      }
-    });
-  };
+// Di dalam komponen RelationsPage, update fungsi handleCreate:
+const handleCreate = (e) => {
+  e.preventDefault();
+  createForm.post(route('relations.store'), {
+    onSuccess: () => {
+      createForm.reset();
+      setShowCreateModal(false);
+      sessionStorage.removeItem('relationsPageRefreshed');
+
+      // Tambahkan reload halaman setelah berhasil membuat relation
+      router.reload();
+    }
+  });
+};
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -217,15 +228,10 @@ export default function RelationsPage({
   const handleJoin = () => {
     router.post(route('relations.join'), { kode: joinKode }, {
       onSuccess: (page) => {
-        // Set success state and message
         setJoinSuccess(true);
         setJoinSuccessMessage(page.props.flash.success || 'Permintaan bergabung berhasil dikirim');
-
-        // Reset form but stay on join tab
         setJoinKode('');
         setSearchResult(null);
-
-        // Hapus flag refresh agar halaman bisa di-refresh lagi setelah action
         sessionStorage.removeItem('relationsPageRefreshed');
       },
       onError: (errors) => {
@@ -244,18 +250,36 @@ export default function RelationsPage({
     router.delete(route('relations.destroy', relation.id), {
       onSuccess: () => {
         setShowDeleteConfirm(null);
-        // Hapus flag refresh agar halaman bisa di-refresh lagi setelah action
         sessionStorage.removeItem('relationsPageRefreshed');
       }
     });
   };
 
+  // PERBAIKAN UTAMA: Handler untuk keluar dari relation
   const handleLeave = (relation) => {
-    router.post(route('relations.leave', relation.id), {
-      onSuccess: () => {
+    router.post(route('relations.leave', relation.id), {}, {
+      onSuccess: (page) => {
+        // Tutup modal konfirmasi terlebih dahulu
         setShowLeaveConfirm(null);
-        // Hapus flag refresh agar halaman bisa di-refresh lagi setelah action
+
+        // Set relation yang baru saja ditinggalkan untuk modal sukses
+        setLeftRelation(relation);
+
+        // Tampilkan modal sukses
+        setShowLeaveSuccessModal(true);
+
+        // Hapus flag refresh
         sessionStorage.removeItem('relationsPageRefreshed');
+      },
+      onError: (errors) => {
+        // Tutup modal konfirmasi jika ada error
+        setShowLeaveConfirm(null);
+
+        // Tampilkan error message
+        const errorMsg = errors.message || 'Terjadi kesalahan saat keluar dari hubungan';
+        setSuccessMessage(errorMsg);
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 5000);
       }
     });
   };
@@ -265,6 +289,7 @@ export default function RelationsPage({
     editForm.setData({
       nama: relation.nama,
       deskripsi: relation.deskripsi || '',
+      kode: relation.kode,
     });
   };
 
@@ -274,7 +299,6 @@ export default function RelationsPage({
       onSuccess: () => {
         setEditingId(null);
         editForm.reset();
-        // Hapus flag refresh agar halaman bisa di-refresh lagi setelah action
         sessionStorage.removeItem('relationsPageRefreshed');
       }
     });
@@ -282,14 +306,20 @@ export default function RelationsPage({
 
   const handleCloseJoinModal = () => {
     setShowJoinSuccessModal(false);
-    // Hapus flag sebelum reload
     sessionStorage.removeItem('relationsPageRefreshed');
     router.reload();
   };
 
   const handleCloseEditModal = () => {
     setShowEditSuccessModal(false);
-    // Hapus flag sebelum reload
+    sessionStorage.removeItem('relationsPageRefreshed');
+    router.reload();
+  };
+
+  // Handler untuk menutup modal sukses keluar dan reload
+  const handleCloseLeaveModal = () => {
+    setShowLeaveSuccessModal(false);
+    setLeftRelation(null);
     sessionStorage.removeItem('relationsPageRefreshed');
     router.reload();
   };
@@ -321,7 +351,6 @@ export default function RelationsPage({
     }
   };
 
-  // Callback untuk refresh members setelah kick
   const handleMemberKicked = async (relationId) => {
     console.log('Refreshing members for relation:', relationId);
 
@@ -335,7 +364,6 @@ export default function RelationsPage({
         setRelationMembers(response.data.members);
         console.log('Members refreshed successfully:', response.data.members);
 
-        // Tampilkan toast success
         setSuccessMessage('Member berhasil dikeluarkan');
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
@@ -355,12 +383,10 @@ export default function RelationsPage({
   };
 
   const handleReloadPage = () => {
-    // Hapus flag sebelum reload manual
     sessionStorage.removeItem('relationsPageRefreshed');
     window.location.reload();
   };
 
-  // Callback untuk refresh members setelah request handled (approve/reject)
   const handleRequestHandled = async (relationId) => {
     console.log('Refreshing members for relation after request handled:', relationId);
 
@@ -374,7 +400,6 @@ export default function RelationsPage({
         setRelationMembers(response.data.members);
         console.log('Members refreshed successfully:', response.data.members);
 
-        // Tampilkan toast success
         setSuccessMessage('Permintaan berhasil diproses');
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
@@ -401,12 +426,22 @@ export default function RelationsPage({
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <Sidebar />
           <main className="flex-1 overflow-y-auto p-4 md:p-6 min-w-0">
-            {/* Header */}
+            {/* Header with Button */}
             <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-bold text-black mb-1">
                 Hubungan Keuangan
               </h1>
-              <p className="text-gray-600 text-sm">Kelola hubungan keuangan dengan pasangan atau keluarga</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-gray-600 text-sm">Kelola hubungan keuangan dengan pasangan atau keluarga</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full border border-black font-bold transition-all shadow-lg text-sm touch-manipulation whitespace-nowrap sm:ml-auto"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Tambah Hubungan Baru</span>
+                  <span className="sm:hidden">Tambah</span>
+                </button>
+              </div>
             </div>
 
             {/* Success Toast */}
@@ -435,7 +470,7 @@ export default function RelationsPage({
 
                 {/* Relations List */}
                 <RelationList
-                  relations={filteredRelations} // Gunakan filtered relations
+                  relations={filteredRelations}
                   editingId={editingId}
                   editForm={editForm}
                   setEditingId={setEditingId}
@@ -447,18 +482,9 @@ export default function RelationsPage({
                   setShowDeleteConfirm={setShowDeleteConfirm}
                   setShowLeaveConfirm={setShowLeaveConfirm}
                   setActiveTab={setActiveTab}
-                  searchTerm={searchTerm} // Pass searchTerm untuk menampilkan pesan jika tidak ada hasil
+                  searchTerm={searchTerm}
                 />
               </>
-            )}
-
-            {/* Content - Create */}
-            {activeTab === 'create' && (
-              <RelationCreateForm
-                createForm={createForm}
-                handleCreate={handleCreate}
-                setActiveTab={setActiveTab}
-              />
             )}
 
             {/* Content - Join */}
@@ -478,7 +504,7 @@ export default function RelationsPage({
                   joinSuccessMessage={joinSuccessMessage}
                 />
 
-                 {/* Pending Requests List - Right Side */}
+                {/* Pending Requests List - Right Side */}
                 <PendingRequestsList
                   myPendingRequests={myPendingRequests}
                   incomingRequests={incomingRequests}
@@ -490,6 +516,13 @@ export default function RelationsPage({
       </div>
 
       {/* Modals */}
+      <CreateRelationModal
+        show={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        createForm={createForm}
+        handleCreate={handleCreate}
+      />
+
       <ConfirmationModal
         show={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(null)}
@@ -534,6 +567,18 @@ export default function RelationsPage({
         onClose={handleCloseEditModal}
         title="Hubungan Berhasil Diperbarui!"
         message="Perubahan pada hubungan keuangan telah disimpan"
+      />
+
+      {/* Modal Sukses Keluar dari Relation */}
+      <SuccessModal
+        show={showLeaveSuccessModal && leftRelation}
+        onClose={handleCloseLeaveModal}
+        title="Berhasil Keluar!"
+        message={
+          <>
+            Anda berhasil keluar dari hubungan <strong>"{leftRelation?.nama}"</strong>
+          </>
+        }
       />
 
       <MembersModal

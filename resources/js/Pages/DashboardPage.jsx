@@ -17,7 +17,7 @@ export default function DashboardPage({ auth }) {
           <Sidebar />
           <main className="flex-1 overflow-y-auto p-8 min-w-0">
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">Laporan Keseluruhan</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Laporan Keseluruhan (Contoh Tampilan) </h1>
             </div>
             <SummaryCards />
             <ChartsSection />

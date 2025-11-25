@@ -32,7 +32,7 @@ class RelationController extends Controller
         })
         ->withCount([
             'users as member_count',
-            'joinRequests as pending_requests_count' => function ($query) {  // TAMBAHKAN INI
+            'joinRequests as pending_requests_count' => function ($query) {
                 $query->where('status', RelationJoinRequest::STATUS_PENDING);
             }
         ])
@@ -50,30 +50,30 @@ class RelationController extends Controller
         ->orderBy('created_at', 'desc')
         ->paginate(10, ['*'], 'joined_page');
 
-    // Pending join requests yang dibuat oleh user
-    $myPendingRequests = RelationJoinRequest::where('user_id', $user->id)
-        ->where('status', RelationJoinRequest::STATUS_PENDING)
-        ->with(['relation:id,kode,nama,creator_id', 'relation.creator:id,name,email']) // TAMBAHKAN relation.creator
-        ->orderBy('created_at', 'desc')
-        ->get()
-        ->map(function ($request) {
-            return [
-                'id' => $request->id,
-                'relation' => [
-                    'id' => $request->relation->id,
-                    'kode' => $request->relation->kode,
-                    'nama' => $request->relation->nama,
-                    'owner' => $request->relation->creator ? [ // TAMBAHKAN OWNER INFO
-                        'id' => $request->relation->creator->id,
-                        'name' => $request->relation->creator->name,
-                        'email' => $request->relation->creator->email,
-                    ] : null,
-                ],
-                'pesan' => $request->pesan,
-                'created_at' => $request->created_at->format('d M Y, H:i'),
-                'created_at_human' => $request->created_at->diffForHumans(),
-            ];
-        });
+        // Pending join requests yang dibuat oleh user
+        $myPendingRequests = RelationJoinRequest::where('user_id', $user->id)
+            ->where('status', RelationJoinRequest::STATUS_PENDING)
+            ->with(['relation:id,kode,nama,creator_id', 'relation.creator:id,name,email'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'relation' => [
+                        'id' => $request->relation->id,
+                        'kode' => $request->relation->kode,
+                        'nama' => $request->relation->nama,
+                        'owner' => $request->relation->creator ? [
+                            'id' => $request->relation->creator->id,
+                            'name' => $request->relation->creator->name,
+                            'email' => $request->relation->creator->email,
+                        ] : null,
+                    ],
+                    'pesan' => $request->pesan,
+                    'created_at' => $request->created_at->format('d M Y, H:i'),
+                    'created_at_human' => $request->created_at->diffForHumans(),
+                ];
+            });
 
         // Pending join requests untuk relation yang user sebagai owner
         $incomingRequests = RelationJoinRequest::whereHas('relation', function ($query) use ($user) {
@@ -113,7 +113,7 @@ class RelationController extends Controller
                 'nama' => $relation->nama,
                 'deskripsi' => $relation->deskripsi,
                 'member_count' => $relation->member_count,
-                'pending_requests_count' => $relation->pending_requests_count, // TAMBAHKAN INI
+                'pending_requests_count' => $relation->pending_requests_count,
                 'creator' => [
                     'name' => $relation->creator->name,
                     'email' => $relation->creator->email,
@@ -164,7 +164,6 @@ class RelationController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Nama harus unik per user (sebagai creator)
                 Rule::unique('relations', 'nama')->where(function ($query) use ($user) {
                     return $query->where('creator_id', $user->id);
                 }),
@@ -254,7 +253,6 @@ class RelationController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Nama harus unik per user (kecuali nama sendiri)
                 Rule::unique('relations', 'nama')
                     ->where(function ($query) use ($user) {
                         return $query->where('creator_id', $user->id);
@@ -353,15 +351,8 @@ class RelationController extends Controller
             return redirect()->back()->with('warning', 'Anda sudah menjadi member dari relation ini.');
         }
 
-        // Cek apakah sudah pernah membuat request dan masih pending
-        $existingRequest = RelationJoinRequest::where('relation_id', $relation->id)
-            ->where('user_id', $user->id)
-            ->where('status', RelationJoinRequest::STATUS_PENDING)
-            ->first();
-
-        if ($existingRequest) {
-            return redirect()->back()->with('warning', 'Anda sudah memiliki request join yang masih pending untuk relation ini.');
-        }
+        // HAPUS: Pengecekan existing request untuk user yang sudah pernah keluar
+        // User bisa mengajukan request baru meskipun pernah keluar sebelumnya
 
         try {
             // Buat request join baru
@@ -378,35 +369,35 @@ class RelationController extends Controller
         }
     }
 
-    /**
-     * Membatalkan request join
-     *
-     * @param RelationJoinRequest $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function cancelJoinRequest(RelationJoinRequest $joinRequest)
-    {
-        $user = Auth::user();
+/**
+ * Membatalkan request join
+ *
+ * @param RelationJoinRequest $request
+ * @return \Illuminate\Http\RedirectResponse
+ */
+public function cancelJoinRequest(RelationJoinRequest $request)
+{
+    $user = Auth::user();
 
-        // Validasi: hanya user yang membuat request yang boleh membatalkan
-        if ($joinRequest->user_id !== $user->id) {
-            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan request ini.');
-        }
-
-        // Validasi: hanya pending request yang bisa dibatalkan
-        if ($joinRequest->status !== RelationJoinRequest::STATUS_PENDING) {
-            return redirect()->back()->with('error', 'Request ini sudah tidak bisa dibatalkan.');
-        }
-
-        try {
-            $relationName = $joinRequest->relation->nama;
-            $joinRequest->delete();
-
-            return redirect()->back()->with('success', 'Request join ke relation "' . $relationName . '" berhasil dibatalkan.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal membatalkan request join. Silakan coba lagi.');
-        }
+    // Validasi: hanya user yang membuat request yang boleh membatalkan
+    if ($request->user_id !== $user->id) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan request ini.');
     }
+
+    // Validasi: hanya pending request yang bisa dibatalkan
+    if ($request->status !== RelationJoinRequest::STATUS_PENDING) {
+        return redirect()->back()->with('error', 'Request ini sudah tidak bisa dibatalkan.');
+    }
+
+    try {
+        $relationName = $request->relation->nama;
+        $request->delete();
+
+        return redirect()->back()->with('success', 'Request join ke relation "' . $relationName . '" berhasil dibatalkan.');
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Gagal membatalkan request join. Silakan coba lagi.');
+    }
+}
 
     /**
      * Approve join request (owner only)
@@ -564,14 +555,25 @@ class RelationController extends Controller
             return redirect()->back()->with('error', 'User tidak ditemukan di relation ini.');
         }
 
+        DB::beginTransaction();
+
         try {
             $kickedUser = \App\Models\User::findOrFail($userId);
 
             // Hapus membership
             $relation->users()->detach($userId);
 
+            // HAPUS SEMUA REQUEST JOIN YANG ADA dari user ini untuk relation ini
+            // Ini memungkinkan user untuk mengajukan join request lagi
+            RelationJoinRequest::where('relation_id', $relation->id)
+                ->where('user_id', $userId)
+                ->delete();
+
+            DB::commit();
+
             return redirect()->back()->with('success', 'Member "' . $kickedUser->name . '" berhasil dikeluarkan dari relation.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()->with('error', 'Gagal mengeluarkan member. Silakan coba lagi.');
         }
     }
@@ -606,6 +608,12 @@ class RelationController extends Controller
 
             // Hapus membership
             $relation->users()->detach($user->id);
+
+            // HAPUS SEMUA REQUEST JOIN YANG ADA dari user ini untuk relation ini
+            // Ini memungkinkan user untuk mengajukan join request lagi
+            RelationJoinRequest::where('relation_id', $relation->id)
+                ->where('user_id', $user->id)
+                ->delete();
 
             // Jika user adalah owner dan satu-satunya member, hapus relation
             if ($isOwner && $totalMembers === 1) {

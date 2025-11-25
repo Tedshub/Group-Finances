@@ -42,6 +42,11 @@ export default function NavbarIn({ auth }) {
     setIsDropdownOpen(false);
   };
 
+  // Fungsi untuk navigasi ke halaman Coming Soon
+  const handleComingSoon = (feature) => {
+    router.visit(`/coming-soon?feature=${feature}`);
+  };
+
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-white border-b border-gray-300 shadow-sm">
       {/* Logo Kiri */}
@@ -49,18 +54,20 @@ export default function NavbarIn({ auth }) {
 
       {/* Icon Kanan */}
       <div className="flex items-center gap-6 relative" ref={dropdownRef}>
-        {/* Chatbot */}
+        {/* ChatGroup */}
         <button
-          onClick={() => alert("Coming soon: Chatbot feature")}
+          onClick={() => handleComingSoon('chat')}
           className="text-gray-700 hover:text-black transition-colors cursor-pointer"
+          title="Fitur Chat Group"
         >
           <MessageCircle size={22} />
         </button>
 
         {/* Notifikasi */}
         <button
-          onClick={() => alert("Notifikasi terbaru belum tersedia")}
+          onClick={() => handleComingSoon('notification')}
           className="text-gray-700 hover:text-black transition-colors cursor-pointer"
+          title="Fitur Notifikasi"
         >
           <Bell size={22} />
         </button>
@@ -82,12 +89,6 @@ export default function NavbarIn({ auth }) {
                 onClick={() => handleNavigate('/profile')}
               >
                 Profile
-              </li>
-              <li
-                className="px-4 py-2 hover:bg-gray-50 cursor-pointer font-medium text-gray-700"
-                onClick={() => handleNavigate("/change-password")}
-              >
-                Change Password
               </li>
               <li
                 className="px-4 py-2 hover:bg-red-50 text-red-600 cursor-pointer font-medium"
