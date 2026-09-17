@@ -31,6 +31,7 @@ class UserRelation extends Pivot
         'relation_id',
         'is_owner',
         'join_at',
+        'notification_prefs',
     ];
 
     /**
@@ -39,10 +40,11 @@ class UserRelation extends Pivot
      * @var array
      */
     protected $casts = [
-        'is_owner' => 'boolean',
-        'join_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'is_owner'           => 'boolean',
+        'join_at'            => 'datetime',
+        'notification_prefs' => 'array',
+        'created_at'         => 'datetime',
+        'updated_at'         => 'datetime',
     ];
 
     // ========== Relationships ==========

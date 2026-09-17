@@ -1,28 +1,27 @@
 // resources/js/Layouts/Sidebar.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
+import Logo from "./Logo";
 import {
   Home,
   BarChart2,
   Users,
   PiggyBank,
   Wallet,
-  Calculator,
   FileText,
   Settings,
   ChevronRight,
   ChevronLeft,
-  Clock,
 } from "lucide-react";
 
 const menuItems = [
-  { label: "Dashboard", icon: <Home size={20} />, path: "/dashboard" },
-  { label: "Hubungan", icon: <Users size={20} />, path: "/relations", hasNotification: true },
-  { label: "Transaksi", icon: <BarChart2 size={20} />, path: "/transactions", comingSoon: true },
-  { label: "Tabungan", icon: <PiggyBank size={20} />, path: "/savings", comingSoon: true },
-  { label: "Penganggaran", icon: <Wallet size={20} />, path: "/saving-goals", comingSoon: true },
-  { label: "Laporan Keuangan", icon: <FileText size={20} />, path: "/statements", comingSoon: true },
-  { label: "Pengaturan", icon: <Settings size={20} />, path: "/settings", comingSoon: true },
+  { label: "Dashboard",        icon: Home,      path: "/dashboard",    chipColor: '#7c98ff' },
+  { label: "Hubungan",         icon: Users,     path: "/relations",    chipColor: '#c5ffbc', hasNotification: true },
+  { label: "Transaksi",        icon: BarChart2, path: "/transactions", chipColor: '#4FD1C5', matchPattern: 'transactions' },
+  { label: "Tabungan",         icon: PiggyBank, path: "/savings",      chipColor: '#FDBB4E', matchPattern: 'savings' },
+  { label: "Penganggaran",     icon: Wallet,    path: "/budgeting",    chipColor: '#FF6B7A', matchPattern: 'budgeting' },
+  { label: "Laporan Keuangan", icon: FileText,  path: "/statements",   chipColor: '#7c98ff', matchPattern: 'statements' },
+  { label: "Pengaturan",       icon: Settings,  path: "/settings",     chipColor: '#E2E8F0', matchPattern: 'settings' },
 ];
 
 export default function Sidebar() {
@@ -42,7 +41,6 @@ export default function Sidebar() {
       setIsMobile(mobile);
       if (!mobile) setIsMobileOpen(false);
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -50,7 +48,6 @@ export default function Sidebar() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Untuk mobile: tutup sidebar jika klik di luar sidebar dan toggle button
       if (isMobile && isMobileOpen) {
         if (
           sidebarRef.current &&
@@ -61,13 +58,10 @@ export default function Sidebar() {
           setIsMobileOpen(false);
         }
       }
-
-      // Untuk desktop: reset manual open
       if (!isMobile && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         setIsManualOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMobile, isMobileOpen]);
@@ -76,30 +70,21 @@ export default function Sidebar() {
 
   const handleNavigate = (path, isComingSoon) => {
     if (isComingSoon) {
-      // Jika fitur coming soon, arahkan ke halaman coming soon dengan parameter
       router.visit(`/coming-soon?feature=${path.substring(1)}`);
     } else {
-      // Jika fitur sudah tersedia, navigasi normal
       router.visit(path);
     }
-
-    if (isMobile) {
-      setIsMobileOpen(false);
-    }
+    if (isMobile) setIsMobileOpen(false);
   };
 
-  const toggleMobileSidebar = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
-
-  // === MOBILE MODE ===
+  // ── MOBILE MODE ───────────────────────────────────────────
   if (isMobile) {
     return (
       <>
-        {/* Overlay backdrop */}
+        {/* Overlay */}
         {isMobileOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 transition-opacity duration-300"
             onClick={() => setIsMobileOpen(false)}
           />
         )}
@@ -107,176 +92,157 @@ export default function Sidebar() {
         {/* Toggle Button */}
         <button
           ref={toggleButtonRef}
-          onClick={toggleMobileSidebar}
-          className={`fixed top-1/2 -translate-y-1/2 bg-[#4c72ff] text-white p-2 hover:bg-[#405ecf] z-50 shadow-lg border-r border-t border-b border-[#6b87ee] transition-all duration-300 ease-in-out ${
-            isMobileOpen ? "left-64" : "left-0"
-          }`}
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out text-black bg-[#7c98ff] border-2 border-black border-l-0 rounded-r-2xl shadow-[2px_2px_0px_0px_#000] flex items-center justify-center w-8 h-14"
           style={{
-            width: "36px",
-            height: "60px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderTopRightRadius: "30px",
-            borderBottomRightRadius: "30px",
-            borderTopLeftRadius: "0",
-            borderBottomLeftRadius: "0",
+            left: isMobileOpen ? '260px' : '0',
           }}
         >
-          {isMobileOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          {isMobileOpen ? <ChevronLeft size={18} className="stroke-[3]" /> : <ChevronRight size={18} className="stroke-[3]" />}
         </button>
 
-        {/* Sidebar */}
+        {/* Mobile Sidebar Panel */}
         <aside
           ref={sidebarRef}
-          className={`fixed left-0 top-0 h-full w-64 bg-[#4c72ff] shadow-2xl text-gray-100 z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
+          className={`fixed left-0 top-0 h-full w-64 z-50 flex flex-col bg-white border-r-2 border-black shadow-[6px_0px_0px_0px_#000] transform transition-transform duration-300 ease-in-out ${
             isMobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           {/* Header */}
-          <div className="px-4 py-6 border-b border-[#6b87ee]">
-            <h2 className="text-xl font-bold text-white">Menu</h2>
-            <p className="text-xs text-gray-200 mt-1">Group Finances</p>
+          <div className="px-4 py-3.5 border-b-2 border-black bg-[#C8F5C8]">
+            <Logo size="sm" showBadge={false} />
           </div>
 
           {/* Menu Items */}
-          <ul className="px-3 mt-4 space-y-1 flex-1 overflow-y-auto">
-            {menuItems.map((item, idx) => (
-              <li key={idx} onClick={() => handleNavigate(item.path, item.comingSoon)}>
-                <div
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all cursor-pointer touch-manipulation relative
-                    hover:text-white hover:bg-[#6b87ee] ${
-                      url === item.path
-                        ? "bg-[#6b87ee] text-white font-semibold"
-                        : "text-gray-100"
+          <ul className="px-3 py-4 space-y-1.5 flex-1 overflow-y-auto">
+            {menuItems.map((item, idx) => {
+              const isActive = url === item.path || (item.matchPattern && url.includes(item.matchPattern));
+              const Icon = item.icon;
+              return (
+                <li key={idx} onClick={() => handleNavigate(item.path, item.comingSoon)}>
+                  <div
+                    className={`flex items-center gap-3 rounded-full px-3 py-2 cursor-pointer transition-all border-2 ${
+                      isActive
+                        ? 'bg-[#7c98ff] text-black font-black border-black shadow-[2px_2px_0px_0px_#000]'
+                        : 'border-transparent text-black font-bold hover:bg-[#C8F5C8]/50 hover:border-black'
                     }`}
-                >
-                  <span className="pointer-events-none relative">
-                    {item.icon}
-
-                    {/* Badge Coming Soon - Mobile */}
-                    {item.comingSoon && (
-                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-[#4c72ff]"></span>
-                    )}
-                  </span>
-                  <span className="text-sm font-medium pointer-events-none">{item.label}</span>
-
-                  {/* Badge Notifikasi - Mobile */}
-                  {item.hasNotification && pendingRequestsCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
-                  )}
-
-                  {/* Coming Soon Badge - Mobile */}
-                  {item.comingSoon && (
-                    <span className="ml-auto text-xs bg-yellow-400 text-[#4c72ff] px-2 py-0.5 rounded-full font-medium">
-                      Coming Soon
+                  >
+                    {/* Icon chip */}
+                    <span
+                      className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full border border-black"
+                      style={{
+                        background: isActive ? '#ffffff' : item.chipColor,
+                        color: '#000000',
+                      }}
+                    >
+                      <Icon size={14} className="stroke-[2.5]" />
                     </span>
-                  )}
-                </div>
-              </li>
-            ))}
+
+                    <span className="text-sm flex-1 truncate">
+                      {item.label}
+                    </span>
+
+                    {/* Badge notifikasi */}
+                    {item.hasNotification && pendingRequestsCount > 0 && (
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black bg-[#FF6B7A] text-white border border-black flex items-center justify-center flex-shrink-0 shadow-[1px_1px_0px_0px_#000]">
+                        {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
+                      </span>
+                    )}
+
+                    {/* Coming Soon badge */}
+                    {item.comingSoon && (
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-black bg-[#FDBB4E] text-black flex-shrink-0 shadow-[1px_1px_0px_0px_#000]">
+                        Segera
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
 
           {/* Footer */}
-          <footer className="px-4 py-4 text-xs text-gray-200 text-center border-t border-[#6b87ee]">
-            <p>&copy; Group Finances 2025</p>
+          <footer className="px-5 py-3 text-[11px] font-bold text-black border-t-2 border-black bg-gray-50 text-center">
+            © Group Finances 2026
           </footer>
         </aside>
-
-        <style jsx>{`
-          @keyframes pulse {
-            0%, 100% {
-              opacity: 1;
-              transform: scale(1);
-            }
-            50% {
-              opacity: 0.7;
-              transform: scale(1.1);
-            }
-          }
-
-          .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-          }
-        `}</style>
       </>
     );
   }
 
-  // === DESKTOP MODE ===
+  // ── DESKTOP MODE ──────────────────────────────────────────
   return (
-    <>
-      <aside
-        ref={sidebarRef}
-        onMouseEnter={() => setIsHoverOpen(true)}
-        onMouseLeave={() => setIsHoverOpen(false)}
-        className={`flex flex-col transition-all duration-300 bg-[#4c72ff] shadow-lg text-gray-100 ${
-          isDesktopOpen ? "w-64" : "w-20"
-        }`}
-      >
-        <ul className="px-3 mt-6 space-y-1 flex-1 overflow-y-auto min-h-0">
-          {menuItems.map((item, idx) => (
+    <aside
+      ref={sidebarRef}
+      onMouseEnter={() => setIsHoverOpen(true)}
+      onMouseLeave={() => setIsHoverOpen(false)}
+      className={`flex flex-col bg-white border-r-2 border-black transition-all duration-300 z-30 flex-shrink-0 ${
+        isDesktopOpen ? "w-60" : "w-[76px]"
+      }`}
+    >
+      <ul className="px-2.5 py-4 space-y-1.5 flex-1 overflow-y-auto min-h-0">
+        {menuItems.map((item, idx) => {
+          const isActive = url === item.path || (item.matchPattern && url.includes(item.matchPattern));
+          const Icon = item.icon;
+          return (
             <li key={idx} onClick={() => handleNavigate(item.path, item.comingSoon)}>
               <div
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 transition-all cursor-pointer relative
-                  hover:text-white hover:bg-[#6b87ee] ${
-                    url === item.path
-                      ? "bg-[#6b87ee] text-white font-semibold"
-                      : "text-gray-100"
-                  }`}
+                className={`flex items-center gap-3 rounded-full px-2.5 py-2 cursor-pointer transition-all border-2 ${
+                  isActive
+                    ? 'bg-[#7c98ff] text-black font-black border-black shadow-[2px_2px_0px_0px_#000]'
+                    : 'border-transparent text-black font-bold hover:bg-[#C8F5C8]/50 hover:border-black'
+                }`}
+                title={!isDesktopOpen ? item.label : undefined}
               >
-                <span className="relative">
-                  {item.icon}
-
-                  {/* Badge Notifikasi - Desktop (icon only) */}
-                  {item.hasNotification && pendingRequestsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#4c72ff] animate-pulse"></span>
-                  )}
-
-                  {/* Badge Coming Soon - Desktop (icon only) */}
-                  {item.comingSoon && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-[#4c72ff]"></span>
-                  )}
+                {/* Icon chip */}
+                <span
+                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border border-black shadow-[1px_1px_0px_0px_#000]"
+                  style={{
+                    background: isActive ? '#ffffff' : item.chipColor,
+                    color: '#000000',
+                  }}
+                >
+                  <Icon size={16} className="stroke-[2.5]" />
                 </span>
 
+                {/* Teks label */}
                 {isDesktopOpen && (
-                  <>
-                    <span className="text-sm font-medium">{item.label}</span>
+                  <span className="text-sm flex-1 truncate">
+                    {item.label}
+                  </span>
+                )}
 
-                    {/* Coming Soon Badge - Desktop (text only) */}
-                    {item.comingSoon && (
-                      <span className="ml-auto text-xs bg-yellow-400 text-[#4c72ff] px-2 py-0.5 rounded-full font-medium">
-                        Coming Soon
-                      </span>
-                    )}
-                  </>
+                {/* Badge notifikasi */}
+                {item.hasNotification && pendingRequestsCount > 0 && (
+                  <span
+                    className={`rounded-full text-[9px] font-black bg-[#FF6B7A] text-white border border-black flex items-center justify-center flex-shrink-0 shadow-[1px_1px_0px_0px_#000] ${
+                      isDesktopOpen
+                        ? "min-w-[18px] h-[18px] px-1"
+                        : "absolute top-1 right-1 w-4 h-4 text-[8px]"
+                    }`}
+                  >
+                    {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
+                  </span>
+                )}
+
+                {/* Coming Soon badge */}
+                {item.comingSoon && isDesktopOpen && (
+                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-black bg-[#FDBB4E] text-black flex-shrink-0 shadow-[1px_1px_0px_0px_#000]">
+                    Segera
+                  </span>
                 )}
               </div>
             </li>
-          ))}
-        </ul>
+          );
+        })}
+      </ul>
 
-        <footer className="px-4 py-4 text-xs text-gray-200 text-center border-t border-[#6b87ee]">
-          &copy; Group Finances 2025
+      {/* Footer desktop */}
+      {isDesktopOpen && (
+        <footer className="px-4 py-3 text-[10px] font-bold text-black border-t-2 border-black bg-gray-50 text-center">
+          © Group Finances 2026
         </footer>
-      </aside>
-
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.7;
-            transform: scale(1.1);
-          }
-        }
-
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-      `}</style>
-    </>
+      )}
+    </aside>
   );
 }

@@ -31,6 +31,7 @@ class Transaction extends Model
         'user_id',
         'user_name',
         'jenis',
+        'category_id',
         'jumlah',
         'catatan',
         'bukti',
@@ -64,6 +65,14 @@ class Transaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Kategori transaksi
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Category::class, 'category_id');
     }
 
     // ========== Accessors ==========
@@ -187,12 +196,12 @@ class Transaction extends Model
     }
 
 /**
- * Delete file bukti dari private storage
+ * Delete file bukti dari local storage
  */
 public function deleteBuktiFile(): bool
 {
-    if ($this->bukti && Storage::disk('private')->exists($this->bukti)) {
-        return Storage::disk('private')->delete($this->bukti);
+    if ($this->bukti && Storage::disk('local')->exists($this->bukti)) {
+        return Storage::disk('local')->delete($this->bukti);
     }
     return true;
 }
@@ -205,7 +214,7 @@ public function getBuktiPath(): ?string
     if (!$this->bukti) {
         return null;
     }
-    return Storage::disk('private')->path($this->bukti);
+    return Storage::disk('local')->path($this->bukti);
 }
 
 /**
@@ -213,7 +222,7 @@ public function getBuktiPath(): ?string
  */
 public function hasBukti(): bool
 {
-    return $this->bukti && Storage::disk('private')->exists($this->bukti);
+    return $this->bukti && Storage::disk('local')->exists($this->bukti);
 }
 
 /**
@@ -227,7 +236,7 @@ public function getBuktiMimeType(): ?string
 
     try {
         // Coba gunakan mime_content_type dulu
-        $filePath = Storage::disk('private')->path($this->bukti);
+        $filePath = Storage::disk('local')->path($this->bukti);
 
         if (file_exists($filePath)) {
             $mimeType = mime_content_type($filePath);
@@ -262,7 +271,7 @@ public function getBuktiSize(): ?string
     if (!$this->hasBukti()) {
         return null;
     }
-    $bytes = Storage::disk('private')->size($this->bukti);
+    $bytes = Storage::disk('local')->size($this->bukti);
     $units = ['B', 'KB', 'MB', 'GB'];
     $i = 0;
     while ($bytes >= 1024 && $i < count($units) - 1) {

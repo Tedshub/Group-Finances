@@ -1,6 +1,8 @@
 // resources/js/Pages/Auth/Login.jsx
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { Eye, EyeOff, ArrowRight, Lock, Users, ShieldCheck, Wallet, PiggyBank, Zap } from 'lucide-react';
+import Logo from '@/Layouts/Logo';
 
 export default function Login({ status, canResetPassword }) {
     const [isVisible, setIsVisible] = useState(false);
@@ -20,11 +22,9 @@ export default function Login({ status, canResetPassword }) {
             sessionStorage.setItem('loginPageReloaded', 'true');
             window.location.reload();
         } else {
-            // Tampilkan animasi setelah reload
             setIsVisible(true);
         }
 
-        // Cleanup: hapus flag saat komponen unmount (pindah halaman)
         return () => {
             sessionStorage.removeItem('loginPageReloaded');
         };
@@ -43,109 +43,169 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <>
-            <Head title="Masuk" />
+            <Head title="Masuk - Group Finances" />
             <div className="min-h-screen bg-[#C8F5C8] flex flex-col overflow-x-hidden">
-                {/* Header/Logo */}
-                <header className="px-4 sm:px-6 lg:px-20 pt-6 sm:pt-8 pb-4">
-                    <Link href="/" className="flex items-center gap-2 w-fit">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-xl sm:text-2xl">G</span>
-                        </div>
-                        <h1 className="text-black font-bold text-lg sm:text-xl md:text-2xl tracking-wide">
-                            GROUP FINANCES
-                        </h1>
-                    </Link>
+                {/* Header/Logo Neobrutalism */}
+                <header className="px-4 sm:px-6 lg:px-20 pt-6 sm:pt-8 pb-4 relative z-10">
+                    <Logo size="lg" href="/" showBadge={true} hideTextOnMobile={true} />
                 </header>
 
                 {/* Main Content */}
-                <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-                    <div className="max-w-md w-full">
+                <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative">
+
+                    {/* ── Decorative floating elements (mobile & desktop background) ── */}
+                    {/* Top-left block */}
+                    <div className="absolute top-8 left-4 w-16 h-16 bg-[#7c98ff] border-2 border-black rounded-2xl shadow-[3px_3px_0px_0px_#000] rotate-12 opacity-60 hidden sm:block" />
+                    {/* Top-right block */}
+                    <div className="absolute top-12 right-6 w-10 h-10 bg-[#FDBB4E] border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] -rotate-6 opacity-70 hidden sm:block" />
+                    {/* Bottom-left block */}
+                    <div className="absolute bottom-16 left-8 w-12 h-12 bg-[#FF6B7A] border-2 border-black rounded-2xl shadow-[3px_3px_0px_0px_#000] -rotate-12 opacity-50 hidden sm:block" />
+                    {/* Bottom-right block */}
+                    <div className="absolute bottom-10 right-10 w-20 h-20 bg-white border-2 border-black rounded-3xl shadow-[4px_4px_0px_0px_#000] rotate-6 opacity-40 hidden sm:block" />
+                    {/* Middle-left floating icon chip */}
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 flex-col gap-3 hidden lg:flex">
+                        <div className="bg-white border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <div className="w-7 h-7 bg-[#C8F5C8] border border-black rounded-lg flex items-center justify-center">
+                                <ShieldCheck size={14} className="text-black" />
+                            </div>
+                            <span className="text-black font-black text-xs">Data Aman</span>
+                        </div>
+                        <div className="bg-white border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <div className="w-7 h-7 bg-[#7c98ff] border border-black rounded-lg flex items-center justify-center">
+                                <Users size={14} className="text-black" />
+                            </div>
+                            <span className="text-black font-black text-xs">Multi User</span>
+                        </div>
+                        <div className="bg-white border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <div className="w-7 h-7 bg-[#FDBB4E] border border-black rounded-lg flex items-center justify-center">
+                                <Wallet size={14} className="text-black" />
+                            </div>
+                            <span className="text-black font-black text-xs">Kelola Kas</span>
+                        </div>
+                    </div>
+
+                    {/* Middle-right floating info chips */}
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex-col gap-3 hidden lg:flex">
+                        <div className="bg-[#FDBB4E] border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <PiggyBank size={14} className="text-black" />
+                            <span className="text-black font-black text-xs">Tabungan Grup</span>
+                        </div>
+                        <div className="bg-[#FF6B7A] border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <Zap size={14} className="text-white" />
+                            <span className="text-white font-black text-xs">Realtime Sync</span>
+                        </div>
+                        <div className="bg-[#7c98ff] border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <Lock size={14} className="text-black" />
+                            <span className="text-black font-black text-xs">Privasi Terjaga</span>
+                        </div>
+                    </div>
+
+                    {/* ── Form Card ── */}
+                    <div className="max-w-md w-full relative z-10">
+                        {/* Decorative accent blocks behind card */}
+                        <div className="absolute -top-3 -right-3 w-full h-full bg-[#7c98ff] border-2 border-black rounded-3xl" />
                         <div
-                            className={`bg-white rounded-3xl shadow-lg p-8 sm:p-10 transition-all duration-1000 ${
-                                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                            className={`relative bg-white border-2 border-black rounded-3xl shadow-[6px_6px_0px_0px_#000] p-7 sm:p-10 transition-all duration-700 ${
+                                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                             }`}
                         >
+                            {/* Lock icon accent */}
+                            <div className="w-12 h-12 bg-[#C8F5C8] border-2 border-black rounded-2xl flex items-center justify-center mb-5 shadow-[2px_2px_0px_0px_#000]">
+                                <Lock size={22} className="text-black" />
+                            </div>
+
                             {/* Title */}
-                            <div className="mb-8">
-                                <h2 className="text-4xl sm:text-5xl font-serif text-black mb-3">
-                                    Masuk
+                            <div className="mb-7">
+                                <h2
+                                    className="text-3xl sm:text-4xl font-black text-black mb-2 leading-tight"
+                                    style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+                                >
+                                    Masuk ke Akun
                                 </h2>
-                                <p className="text-gray-600 text-base">
-                                    Selamat datang kembali! Silakan masuk ke akun Anda.
+                                <p className="text-black/70 text-sm font-bold">
+                                    Selamat datang kembali! Kelola keuangan bersama grup Anda.
                                 </p>
                             </div>
 
                             {/* Status Message */}
                             {status && (
-                                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+                                <div className="mb-6 p-3.5 bg-[#c5ffbc] border-2 border-black rounded-xl text-sm font-bold text-black shadow-[2px_2px_0px_0px_#000]">
                                     {status}
                                 </div>
                             )}
 
                             {/* Form */}
-                            <form onSubmit={submit} className="space-y-6">
+                            <form onSubmit={submit} className="space-y-5">
                                 {/* Email Field */}
                                 <div>
                                     <label
                                         htmlFor="email"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                        className="block text-xs font-black text-black uppercase tracking-wider mb-1.5"
                                     >
-                                        Email
+                                        Alamat Email
                                     </label>
                                     <input
                                         id="email"
                                         type="email"
                                         name="email"
                                         value={data.email}
-                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-black focus:ring-0 transition-colors"
+                                        className="w-full px-4 py-3 border-2 border-black rounded-xl font-bold text-black placeholder:text-black/35 focus:outline-none focus:shadow-[3px_3px_0px_0px_#000] transition-all"
                                         autoComplete="username"
                                         autoFocus
                                         onChange={(e) => setData('email', e.target.value)}
                                         placeholder="nama@email.com"
+                                        required
                                     />
                                     {errors.email && (
-                                        <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                                        <p className="mt-1.5 text-xs font-bold text-red-600">{errors.email}</p>
                                     )}
                                 </div>
 
                                 {/* Password Field */}
-                                <div className="relative">
-                                    <label
-                                        htmlFor="password"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
-                                    >
-                                        Password
-                                    </label>
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label
+                                            htmlFor="password"
+                                            className="block text-xs font-black text-black uppercase tracking-wider"
+                                        >
+                                            Password
+                                        </label>
+                                        {canResetPassword && (
+                                            <Link
+                                                href={route('password.request')}
+                                                className="text-xs font-bold text-black/70 hover:text-black underline underline-offset-2 transition-colors"
+                                            >
+                                                Lupa password?
+                                            </Link>
+                                        )}
+                                    </div>
                                     <div className="relative">
                                         <input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
                                             name="password"
                                             value={data.password}
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-black focus:ring-0 transition-colors pr-12"
+                                            className="w-full px-4 py-3 border-2 border-black rounded-xl font-bold text-black placeholder:text-black/35 focus:outline-none focus:shadow-[3px_3px_0px_0px_#000] transition-all pr-12"
                                             autoComplete="current-password"
                                             onChange={(e) => setData('password', e.target.value)}
                                             placeholder="••••••••"
+                                            required
                                         />
                                         <button
                                             type="button"
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black hover:text-gray-700 focus:outline-none cursor-pointer"
                                             onClick={togglePasswordVisibility}
+                                            tabIndex="-1"
                                         >
                                             {showPassword ? (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
+                                                <EyeOff size={18} className="stroke-[2.5]" />
                                             ) : (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                                </svg>
+                                                <Eye size={18} className="stroke-[2.5]" />
                                             )}
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="mt-2 text-sm text-red-600">{errors.password}</p>
+                                        <p className="mt-1.5 text-xs font-bold text-red-600">{errors.password}</p>
                                     )}
                                 </div>
 
@@ -157,10 +217,10 @@ export default function Login({ status, canResetPassword }) {
                                         name="remember"
                                         checked={data.remember}
                                         onChange={(e) => setData('remember', e.target.checked)}
-                                        className="w-4 h-4 border-2 border-gray-300 rounded text-black focus:ring-0 focus:ring-offset-0"
+                                        className="w-4 h-4 border-2 border-black rounded text-black focus:ring-0 cursor-pointer shadow-[1px_1px_0px_0px_#000]"
                                     />
-                                    <label htmlFor="remember" className="ml-2 text-sm text-gray-600">
-                                        Ingat saya
+                                    <label htmlFor="remember" className="ml-2.5 text-xs font-bold text-black cursor-pointer select-none">
+                                        Ingat saya di perangkat ini
                                     </label>
                                 </div>
 
@@ -168,45 +228,29 @@ export default function Login({ status, canResetPassword }) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-black text-white py-3 rounded-full font-medium text-base hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full py-3.5 px-6 rounded-full border-2 border-black bg-[#7c98ff] hover:bg-[#6a88fc] text-black font-black text-base shadow-[3px_3px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                                 >
-                                    {processing ? 'Memproses...' : 'Masuk'}
+                                    <span>{processing ? 'Memproses...' : 'Masuk Sekarang'}</span>
+                                    {!processing && <ArrowRight size={18} className="stroke-[3]" />}
                                 </button>
 
-                                {/* Forgot Password & Register Links */}
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
-                                    {canResetPassword && (
+                                {/* Register Link Footer */}
+                                <div className="text-center pt-3 border-t-2 border-black/10">
+                                    <p className="text-xs font-bold text-black/70">
+                                        Belum punya akun?{' '}
                                         <Link
-                                            href={route('password.request')}
-                                            className="text-sm text-gray-600 hover:text-black transition-colors"
+                                            href={route('register')}
+                                            className="font-black text-black underline underline-offset-4 hover:text-[#5B7FF0] transition-colors"
                                         >
-                                            Lupa password?
+                                            Daftar Sekarang
                                         </Link>
-                                    )}
-                                    <Link
-                                        href={route('register')}
-                                        className="text-sm text-gray-600 hover:text-black transition-colors"
-                                    >
-                                        Belum punya akun? <span className="font-semibold">Daftar</span>
-                                    </Link>
+                                    </p>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </main>
             </div>
-
-            <style jsx>{`
-                @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
-
-                h2 {
-                    font-family: 'Libre Baskerville', serif;
-                }
-
-                body {
-                    font-family: 'Inter', sans-serif;
-                }
-            `}</style>
         </>
     );
 }

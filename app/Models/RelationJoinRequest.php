@@ -16,13 +16,47 @@ class RelationJoinRequest extends Model
         'relation_id',
         'status',
         'message',
+        'pesan',
         'reviewed_by',
         'reviewed_at',
+        'processed_by',
+        'processed_at',
     ];
 
     protected $casts = [
         'reviewed_at' => 'datetime',
     ];
+
+    // Accessors and Mutators for backward compatibility
+    public function getPesanAttribute()
+    {
+        return $this->attributes['message'] ?? null;
+    }
+
+    public function setPesanAttribute($value)
+    {
+        $this->attributes['message'] = $value;
+    }
+
+    public function getProcessedByAttribute()
+    {
+        return $this->attributes['reviewed_by'] ?? null;
+    }
+
+    public function setProcessedByAttribute($value)
+    {
+        $this->attributes['reviewed_by'] = $value;
+    }
+
+    public function getProcessedAtAttribute()
+    {
+        return $this->attributes['reviewed_at'] ?? null;
+    }
+
+    public function setProcessedAtAttribute($value)
+    {
+        $this->attributes['reviewed_at'] = $value;
+    }
 
     // Constants untuk status
     const STATUS_PENDING = 'pending';

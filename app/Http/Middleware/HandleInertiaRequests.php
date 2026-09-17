@@ -61,6 +61,28 @@ class HandleInertiaRequests extends Middleware
                 ->where('status', RelationJoinRequest::STATUS_PENDING)
                 ->count();
             },
+
+            // Daftar relation milik user (untuk group switcher di semua halaman)
+            'userRelations' => function () use ($request) {
+                if (!$request->user()) {
+                    return [];
+                }
+                return $request->user()->relations()
+                    ->select('relations.id', 'relations.nama', 'relations.kode')
+                    ->orderBy('relations.nama', 'asc')
+                    ->get();
+            },
+
+            // Unread notifications count untuk badge di Navbar
+            'unreadNotificationsCount' => function () use ($request) {
+                if (!$request->user()) {
+                    return 0;
+                }
+
+                return \App\Models\Notification::forUser($request->user()->id)
+                    ->unread()
+                    ->count();
+            },
         ];
     }
 }

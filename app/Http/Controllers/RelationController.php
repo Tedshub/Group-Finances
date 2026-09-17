@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\Relation;
 use App\Models\RelationJoinRequest;
 use App\Models\Transaction;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +71,7 @@ class RelationController extends Controller
                             'email' => $request->relation->creator->email,
                         ] : null,
                     ],
-                    'pesan' => $request->pesan,
+                    'pesan' => $request->message ?? $request->pesan,
                     'created_at' => $request->created_at->format('d M Y, H:i'),
                     'created_at_human' => $request->created_at->diffForHumans(),
                 ];
@@ -99,7 +101,7 @@ class RelationController extends Controller
                     'kode' => $request->relation->kode,
                     'nama' => $request->relation->nama,
                 ],
-                'pesan' => $request->pesan,
+                'pesan' => $request->message ?? $request->pesan,
                 'created_at' => $request->created_at->format('d M Y, H:i'),
                 'created_at_human' => $request->created_at->diffForHumans(),
             ];
@@ -140,7 +142,7 @@ class RelationController extends Controller
             ];
         });
 
-        return Inertia::render('Relations/RelationsPage', [
+        return Inertia::render('RelationsPage', [
             'ownedRelations' => $ownedRelations,
             'joinedRelations' => $joinedRelations,
             'myPendingRequests' => $myPendingRequests,
@@ -341,6 +343,10 @@ class RelationController extends Controller
         // Cari relation berdasarkan kode
         $relation = Relation::where('kode', $validated['kode'])->first();
 
+        if (!$relation) {
+            return redirect()->back()->with('error', 'Kode relation tidak ditemukan.');
+        }
+
         // Cek apakah user adalah creator/owner
         if ($relation->creator_id === $user->id) {
             return redirect()->back()->with('error', 'Anda tidak bisa join relation milik sendiri.');
@@ -351,47 +357,73 @@ class RelationController extends Controller
             return redirect()->back()->with('warning', 'Anda sudah menjadi member dari relation ini.');
         }
 
-        // HAPUS: Pengecekan existing request untuk user yang sudah pernah keluar
-        // User bisa mengajukan request baru meskipun pernah keluar sebelumnya
-
         try {
-            // Buat request join baru
-            RelationJoinRequest::create([
-                'relation_id' => $relation->id,
-                'user_id' => $user->id,
-                'pesan' => $validated['pesan'] ?? null,
-                'status' => RelationJoinRequest::STATUS_PENDING,
-            ]);
+            // Cek apakah sudah ada request sebelumnya (karena ada unique constraint di DB: user_id & relation_id)
+            $existingRequest = RelationJoinRequest::where('relation_id', $relation->id)
+                ->where('user_id', $user->id)
+                ->first();
 
-            return redirect()->route('relations.index')->with('success', 'Request join ke relation "' . $relation->nama . '" berhasil dikirim. Menunggu persetujuan owner.');
+            if ($existingRequest) {
+                if ($existingRequest->status === RelationJoinRequest::STATUS_PENDING) {
+                    return redirect()->back()->with('warning', 'Permintaan bergabung Anda sedang menunggu persetujuan owner.');
+                }
+
+                // Jika status sebelumnya rejected atau approved tapi belum jadi user, perbarui menjadi pending
+                $existingRequest->update([
+                    'status' => RelationJoinRequest::STATUS_PENDING,
+                    'message' => $validated['pesan'] ?? null,
+                    'reviewed_by' => null,
+                    'reviewed_at' => null,
+                ]);
+            } else {
+                // Buat request join baru
+                RelationJoinRequest::create([
+                    'relation_id' => $relation->id,
+                    'user_id' => $user->id,
+                    'message' => $validated['pesan'] ?? null,
+                    'status' => RelationJoinRequest::STATUS_PENDING,
+                ]);
+            }
+
+            // Kirim notifikasi ke owner relation
+            NotificationService::sendToOwners(
+                $relation,
+                $user->id,
+                Notification::TYPE_JOIN_REQUEST,
+                'Permintaan Bergabung Baru',
+                "{$user->name} mengajukan permintaan bergabung ke grup {$relation->nama}.",
+                route('relations.index', [], false)
+            );
+
+            return redirect()->route('relations.index')->with('success', 'Permintaan bergabung ke relation "' . $relation->nama . '" berhasil dikirim. Menunggu persetujuan owner.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengirim request join. Silakan coba lagi.');
+            return redirect()->back()->with('error', 'Gagal mengirim permintaan bergabung. Silakan coba lagi.');
         }
     }
 
 /**
  * Membatalkan request join
  *
- * @param RelationJoinRequest $request
+ * @param RelationJoinRequest $joinRequest
  * @return \Illuminate\Http\RedirectResponse
  */
-public function cancelJoinRequest(RelationJoinRequest $request)
+public function cancelJoinRequest(RelationJoinRequest $joinRequest)
 {
     $user = Auth::user();
 
     // Validasi: hanya user yang membuat request yang boleh membatalkan
-    if ($request->user_id !== $user->id) {
+    if ($joinRequest->user_id !== $user->id) {
         return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan request ini.');
     }
 
     // Validasi: hanya pending request yang bisa dibatalkan
-    if ($request->status !== RelationJoinRequest::STATUS_PENDING) {
+    if ($joinRequest->status !== RelationJoinRequest::STATUS_PENDING) {
         return redirect()->back()->with('error', 'Request ini sudah tidak bisa dibatalkan.');
     }
 
     try {
-        $relationName = $request->relation->nama;
-        $request->delete();
+        $relationName = $joinRequest->relation->nama;
+        $joinRequest->delete();
 
         return redirect()->back()->with('success', 'Request join ke relation "' . $relationName . '" berhasil dibatalkan.');
     } catch (\Exception $e) {
@@ -432,11 +464,22 @@ public function cancelJoinRequest(RelationJoinRequest $request)
             // Update status request menjadi approved
             $joinRequest->update([
                 'status' => RelationJoinRequest::STATUS_APPROVED,
-                'processed_at' => now(),
-                'processed_by' => $user->id,
+                'reviewed_at' => now(),
+                'reviewed_by' => $user->id,
             ]);
 
             DB::commit();
+
+            // Notifikasi ke pemohon
+            NotificationService::send(
+                $joinRequest->user_id,
+                $user->id,
+                $relation->id,
+                Notification::TYPE_JOIN_REQUEST,
+                'Permintaan Bergabung Diterima',
+                "Permintaan Anda untuk bergabung ke grup {$relation->nama} telah disetujui.",
+                route('relations.show', $relation, false)
+            );
 
             return redirect()->back()->with('success', 'Request join dari ' . $joinRequest->user->name . ' berhasil di-approve.');
         } catch (\Exception $e) {
@@ -471,9 +514,20 @@ public function cancelJoinRequest(RelationJoinRequest $request)
             // Update status request menjadi rejected
             $joinRequest->update([
                 'status' => RelationJoinRequest::STATUS_REJECTED,
-                'processed_at' => now(),
-                'processed_by' => $user->id,
+                'reviewed_at' => now(),
+                'reviewed_by' => $user->id,
             ]);
+
+            // Notifikasi ke pemohon
+            NotificationService::send(
+                $joinRequest->user_id,
+                $user->id,
+                $relation->id,
+                Notification::TYPE_JOIN_REQUEST,
+                'Permintaan Bergabung Ditolak',
+                "Permintaan Anda untuk bergabung ke grup {$relation->nama} tidak disetujui.",
+                route('relations.index', [], false)
+            );
 
             return redirect()->back()->with('success', 'Request join dari ' . $joinRequest->user->name . ' berhasil di-reject.');
         } catch (\Exception $e) {
@@ -809,7 +863,7 @@ public function cancelJoinRequest(RelationJoinRequest $request)
                     'user_id' => $request->user->id,
                     'user_name' => $request->user->name,
                     'user_email' => $request->user->email,
-                    'message' => $request->pesan,
+                    'message' => $request->message ?? $request->pesan,
                     'created_at' => $request->created_at->diffForHumans(),
                     'created_at_formatted' => $request->created_at->format('d M Y, H:i'),
                 ];
@@ -899,11 +953,22 @@ public function cancelJoinRequest(RelationJoinRequest $request)
             // Update status request menjadi approved
             $joinRequest->update([
                 'status' => RelationJoinRequest::STATUS_APPROVED,
-                'processed_at' => now(),
-                'processed_by' => $user->id,
+                'reviewed_at' => now(),
+                'reviewed_by' => $user->id,
             ]);
 
             DB::commit();
+
+            // Notifikasi ke pemohon
+            NotificationService::send(
+                $joinRequest->user_id,
+                $user->id,
+                $relation->id,
+                Notification::TYPE_JOIN_REQUEST,
+                'Permintaan Bergabung Diterima',
+                "Permintaan Anda untuk bergabung ke grup {$relation->nama} telah disetujui.",
+                route('relations.show', $relation, false)
+            );
 
             return redirect()->back()->with('success', 'Request dari ' . $joinRequest->user->name . ' berhasil diterima.');
         } catch (\Exception $e) {
@@ -943,9 +1008,20 @@ public function cancelJoinRequest(RelationJoinRequest $request)
             // Update status request menjadi rejected
             $joinRequest->update([
                 'status' => RelationJoinRequest::STATUS_REJECTED,
-                'processed_at' => now(),
-                'processed_by' => $user->id,
+                'reviewed_at' => now(),
+                'reviewed_by' => $user->id,
             ]);
+
+            // Notifikasi ke pemohon
+            NotificationService::send(
+                $joinRequest->user_id,
+                $user->id,
+                $relation->id,
+                Notification::TYPE_JOIN_REQUEST,
+                'Permintaan Bergabung Ditolak',
+                "Permintaan Anda untuk bergabung ke grup {$relation->nama} tidak disetujui.",
+                route('relations.index', [], false)
+            );
 
             return redirect()->back()->with('success', 'Request dari ' . $joinRequest->user->name . ' berhasil ditolak.');
         } catch (\Exception $e) {
@@ -979,6 +1055,9 @@ public function cancelJoinRequest(RelationJoinRequest $request)
             ]);
         }
 
+        // Check if user is owner
+        $isOwner = $relation->creator_id === $user->id;
+
         // Check if user is already a member
         $alreadyJoined = $relation->hasUser($user);
 
@@ -1001,6 +1080,7 @@ public function cancelJoinRequest(RelationJoinRequest $request)
                     'email' => $relation->creator->email,
                 ]
             ],
+            'is_owner' => $isOwner,
             'already_joined' => $alreadyJoined,
             'has_pending_request' => $hasPendingRequest
         ]);

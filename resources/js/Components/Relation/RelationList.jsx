@@ -15,28 +15,33 @@ export default function RelationList({
   setShowDeleteConfirm,
   setShowLeaveConfirm,
   setActiveTab,
-  searchTerm = '' // Tambahkan properti searchTerm dengan default value kosong
+  searchTerm = ''
 }) {
-  // Cek apakah ada data relations
   const hasRelations = relations.data && relations.data.length > 0;
 
-  // Tampilkan pesan jika tidak ada hubungan
+  // Empty state when searching
   if (!hasRelations) {
-    // Jika ada searchTerm tapi tidak ada hasil, tampilkan pesan pencarian
     if (searchTerm) {
       return (
-        <div className="bg-white rounded-xl md:rounded-2xl border border-black overflow-hidden">
+        <div className="bg-white rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000] overflow-hidden">
           <div className="p-8 md:p-12 text-center">
-            <Search className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg md:text-xl font-serif font-normal text-black mb-2" style={{ fontFamily: "'Libre Baskerville', serif" }}>
+            <div className="w-16 h-16 rounded-full border-2 border-black bg-yellow-200 flex items-center justify-center mx-auto mb-4 shadow-[2px_2px_0px_0px_#000]">
+              <Search className="w-8 h-8 text-black stroke-[2.5]" />
+            </div>
+            <h3
+              className="text-xl md:text-2xl font-serif font-black text-black mb-2"
+              style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+            >
               Tidak ada hasil untuk "{searchTerm}"
             </h3>
-            <p className="text-gray-600 text-sm mb-4">Coba gunakan kata kunci yang berbeda atau periksa ejaan Anda</p>
+            <p className="text-black/70 font-bold text-sm mb-5">
+              Coba gunakan kata kunci nama atau kode yang berbeda
+            </p>
             <button
               onClick={() => setActiveTab('create')}
-              className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-full font-medium transition-all border border-black shadow-lg text-sm touch-manipulation"
+              className="inline-flex items-center gap-2 bg-[#7c98ff] hover:bg-[#6a88fc] text-black px-6 py-2.5 rounded-full font-black border-2 border-black shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4 pointer-events-none" />
+              <Plus className="w-4 h-4 stroke-[3]" />
               Buat Hubungan Baru
             </button>
           </div>
@@ -44,20 +49,27 @@ export default function RelationList({
       );
     }
 
-    // Jika tidak ada searchTerm dan tidak ada hubungan, tampilkan pesan default
+    // Default empty state
     return (
-      <div className="bg-white rounded-xl md:rounded-2xl border border-black overflow-hidden">
+      <div className="bg-white rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000] overflow-hidden">
         <div className="p-8 md:p-12 text-center">
-          <Users className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg md:text-xl font-serif font-normal text-black mb-2" style={{ fontFamily: "'Libre Baskerville', serif" }}>
-            Belum ada hubungan keuangan
+          <div className="w-16 h-16 rounded-full border-2 border-black bg-[#c5ffbc] flex items-center justify-center mx-auto mb-4 shadow-[2px_2px_0px_0px_#000]">
+            <Users className="w-8 h-8 text-black stroke-[2.5]" />
+          </div>
+          <h3
+            className="text-xl md:text-2xl font-serif font-black text-black mb-2"
+            style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+          >
+            Belum Ada Hubungan Keuangan
           </h3>
-          <p className="text-gray-600 text-sm mb-4">Mulai dengan membuat hubungan keuangan pertama Anda</p>
+          <p className="text-black/70 font-bold text-sm mb-5">
+            Mulai kelola keuangan bersama dengan membuat atau bergabung ke hubungan baru
+          </p>
           <button
             onClick={() => setActiveTab('create')}
-            className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-full font-medium transition-all border border-black shadow-lg text-sm touch-manipulation"
+            className="inline-flex items-center gap-2 bg-[#7c98ff] hover:bg-[#6a88fc] text-black px-6 py-2.5 rounded-full font-black border-2 border-black shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-sm cursor-pointer"
           >
-            <Plus className="w-4 h-4 pointer-events-none" />
+            <Plus className="w-4 h-4 stroke-[3]" />
             Buat Hubungan Pertama
           </button>
         </div>
@@ -65,17 +77,17 @@ export default function RelationList({
     );
   }
 
-  // Tampilkan daftar hubungan jika ada data
+  // Relations list
   return (
-    <div className="bg-white rounded-xl md:rounded-2xl border border-black overflow-hidden">
+    <div className="bg-white rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000] overflow-hidden">
       {searchTerm && (
-        <div className="px-4 py-3 bg-blue-50 border-b border-black">
-          <p className="text-sm text-blue-700">
-            Menampilkan {relations.data.length} hasil untuk "{searchTerm}"
+        <div className="px-5 py-3 bg-[#c5ffbc] border-b-2 border-black">
+          <p className="text-sm font-black text-black">
+            Menampilkan {relations.data.length} hasil pencarian untuk "{searchTerm}"
           </p>
         </div>
       )}
-      <div>
+      <div className="divide-y-2 divide-black">
         {relations.data.map((relation, index) => (
           <RelationItem
             key={relation.id}

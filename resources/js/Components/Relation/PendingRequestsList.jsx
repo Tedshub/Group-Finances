@@ -312,38 +312,41 @@ export default function PendingRequestsList({ myPendingRequests = [], incomingRe
 
   return (
     <>
-      <div className="bg-white border border-black rounded-2xl p-4 md:p-6">
+      <div className="bg-white border-2 border-black rounded-2xl p-5 md:p-6 shadow-[4px_4px_0px_0px_#000]">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-serif font-normal text-black" style={{ fontFamily: "'Libre Baskerville', serif" }}>
+          <h3
+            className="text-lg md:text-xl font-serif font-black text-black"
+            style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+          >
             Permintaan Bergabung
           </h3>
           <button
             onClick={() => router.reload()}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
-            title="Refresh"
+            className="w-9 h-9 flex items-center justify-center rounded-full border-2 border-black bg-white hover:bg-yellow-200 text-black shadow-[1.5px_1.5px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+            title="Muat Ulang Permintaan"
           >
-            <RefreshCw className="w-4 h-4 text-gray-600" />
+            <RefreshCw className="w-4 h-4 text-black stroke-[2.5]" />
           </button>
         </div>
 
         {/* Tabs for outgoing/incoming requests */}
-        <div className="flex border-b border-black mb-4">
+        <div className="flex gap-2 border-b-2 border-black pb-3 mb-4">
           <button
             onClick={() => setActiveTab('outgoing')}
-            className={`px-4 py-2 font-medium text-sm ${
+            className={`px-4 py-2 rounded-full font-black text-xs transition-all border-2 border-black cursor-pointer ${
               activeTab === 'outgoing'
-                ? 'border-b-2 border-black text-black'
-                : 'text-gray-600 hover:text-black'
+                ? 'bg-[#7c98ff] text-black shadow-[2px_2px_0px_0px_#000]'
+                : 'bg-white text-black hover:bg-gray-100 shadow-[1px_1px_0px_0px_#000]'
             }`}
           >
             Permintaan Saya ({myPendingRequests?.length || 0})
           </button>
           <button
             onClick={() => setActiveTab('incoming')}
-            className={`px-4 py-2 font-medium text-sm ${
+            className={`px-4 py-2 rounded-full font-black text-xs transition-all border-2 border-black cursor-pointer ${
               activeTab === 'incoming'
-                ? 'border-b-2 border-black text-black'
-                : 'text-gray-600 hover:text-black'
+                ? 'bg-[#7c98ff] text-black shadow-[2px_2px_0px_0px_#000]'
+                : 'bg-white text-black hover:bg-gray-100 shadow-[1px_1px_0px_0px_#000]'
             }`}
           >
             Permintaan Masuk ({incomingRequests?.length || 0})

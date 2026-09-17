@@ -1,5 +1,8 @@
+// resources/js/Pages/Auth/Register.jsx
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { Eye, EyeOff, Check, X, ArrowRight, UserPlus, Users, PiggyBank, BarChart3, ShieldCheck, Sparkles, Home } from 'lucide-react';
+import Logo from '@/Layouts/Logo';
 
 export default function Register() {
     const [isVisible, setIsVisible] = useState(false);
@@ -29,11 +32,9 @@ export default function Register() {
             sessionStorage.setItem('registerPageReloaded', 'true');
             window.location.reload();
         } else {
-            // Tampilkan animasi setelah reload
             setIsVisible(true);
         }
 
-        // Cleanup: hapus flag saat komponen unmount (pindah halaman)
         return () => {
             sessionStorage.removeItem('registerPageReloaded');
         };
@@ -65,7 +66,6 @@ export default function Register() {
     const submit = (e) => {
         e.preventDefault();
 
-        // Cek apakah password memenuhi semua persyaratan
         const isValidPassword = Object.values(passwordValidation).every(Boolean);
 
         if (!isValidPassword) {
@@ -95,54 +95,105 @@ export default function Register() {
 
     return (
         <>
-            <Head title="Daftar" />
+            <Head title="Daftar Akun - Group Finances" />
             <div className="min-h-screen bg-[#C8F5C8] flex flex-col overflow-x-hidden">
-                {/* Header/Logo */}
-                <header className="px-4 sm:px-6 lg:px-20 pt-6 sm:pt-8 pb-4">
-                    <Link href="/" className="flex items-center gap-2 w-fit">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-xl sm:text-2xl">G</span>
-                        </div>
-                        <h1 className="text-black font-bold text-lg sm:text-xl md:text-2xl tracking-wide">
-                            GROUP FINANCES
-                        </h1>
-                    </Link>
+                {/* Header/Logo Neobrutalism */}
+                <header className="px-4 sm:px-6 lg:px-20 pt-6 sm:pt-8 pb-4 relative z-10">
+                    <Logo size="lg" href="/" showBadge={true} hideTextOnMobile={true} />
                 </header>
 
                 {/* Main Content */}
-                <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-                    <div className="max-w-md w-full">
+                <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative">
+
+                    {/* ── Decorative floating shapes in background ── */}
+                    <div className="absolute top-6 left-4 w-14 h-14 bg-[#FDBB4E] border-2 border-black rounded-2xl shadow-[3px_3px_0px_0px_#000] -rotate-6 opacity-60 hidden sm:block" />
+                    <div className="absolute top-16 right-8 w-10 h-10 bg-[#7c98ff] border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] rotate-12 opacity-70 hidden sm:block" />
+                    <div className="absolute bottom-20 left-6 w-16 h-16 bg-white border-2 border-black rounded-3xl shadow-[4px_4px_0px_0px_#000] rotate-6 opacity-40 hidden sm:block" />
+                    <div className="absolute bottom-8 right-4 w-12 h-12 bg-[#FF6B7A] border-2 border-black rounded-2xl shadow-[3px_3px_0px_0px_#000] -rotate-12 opacity-50 hidden sm:block" />
+                    {/* Extra smaller shapes */}
+                    <div className="absolute top-1/3 left-16 w-6 h-6 bg-[#C8F5C8] border-2 border-black rounded-lg rotate-45 opacity-80 hidden xl:block" />
+                    <div className="absolute bottom-1/3 right-16 w-8 h-8 bg-[#FDBB4E] border-2 border-black rounded-lg -rotate-12 opacity-60 hidden xl:block" />
+
+                    {/* Middle-left floating icon chips */}
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 flex-col gap-3 hidden lg:flex">
+                        <div className="bg-white border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <div className="w-7 h-7 bg-[#FDBB4E] border border-black rounded-lg flex items-center justify-center">
+                                <Users size={14} className="text-black" />
+                            </div>
+                            <span className="text-black font-black text-xs">Kelola Grup</span>
+                        </div>
+                        <div className="bg-white border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <div className="w-7 h-7 bg-[#C8F5C8] border border-black rounded-lg flex items-center justify-center">
+                                <PiggyBank size={14} className="text-black" />
+                            </div>
+                            <span className="text-black font-black text-xs">Tabungan Bersama</span>
+                        </div>
+                        <div className="bg-white border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <div className="w-7 h-7 bg-[#FF6B7A] border border-black rounded-lg flex items-center justify-center">
+                                <Home size={14} className="text-black" />
+                            </div>
+                            <span className="text-black font-black text-xs">Kas Keluarga</span>
+                        </div>
+                    </div>
+
+                    {/* Middle-right floating info chips */}
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex-col gap-3 hidden lg:flex">
+                        <div className="bg-[#7c98ff] border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <BarChart3 size={14} className="text-black" />
+                            <span className="text-black font-black text-xs">Laporan Otomatis</span>
+                        </div>
+                        <div className="bg-[#C8F5C8] border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <ShieldCheck size={14} className="text-black" />
+                            <span className="text-black font-black text-xs">100% Aman</span>
+                        </div>
+                        <div className="bg-[#FDBB4E] border-2 border-black rounded-2xl px-3 py-2.5 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2">
+                            <Sparkles size={14} className="text-black" />
+                            <span className="text-black font-black text-xs">Gratis Selamanya</span>
+                        </div>
+                    </div>
+
+                    {/* ── Form Card ── */}
+                    <div className="max-w-md w-full relative z-10">
+                        {/* Accent block behind card */}
+                        <div className="absolute -top-3 -right-3 w-full h-full bg-[#FDBB4E] border-2 border-black rounded-3xl" />
                         <div
-                            className={`bg-white rounded-3xl shadow-lg p-8 sm:p-10 transition-all duration-1000 ${
-                                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                            className={`relative bg-white border-2 border-black rounded-3xl shadow-[6px_6px_0px_0px_#000] p-7 sm:p-10 transition-all duration-700 ${
+                                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                             }`}
                         >
+                            {/* UserPlus icon accent */}
+                            <div className="w-12 h-12 bg-[#FDBB4E] border-2 border-black rounded-2xl flex items-center justify-center mb-5 shadow-[2px_2px_0px_0px_#000]">
+                                <UserPlus size={22} className="text-black" />
+                            </div>
                             {/* Title */}
-                            <div className="mb-8">
-                                <h2 className="text-4xl sm:text-5xl font-serif text-black mb-3">
-                                    Daftar
+                            <div className="mb-7">
+                                <h2
+                                    className="text-3xl sm:text-4xl font-black text-black mb-2 leading-tight"
+                                    style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+                                >
+                                    Daftar Akun Baru
                                 </h2>
-                                <p className="text-gray-600 text-base">
-                                    Mulai perjalanan keuangan bersama pasangan Anda.
+                                <p className="text-black/70 text-sm font-bold">
+                                    Mulai kelola keuangan bersama keluarga, pasangan, atau tim Anda.
                                 </p>
                             </div>
 
                             {/* Form */}
-                            <form onSubmit={submit} className="space-y-5">
+                            <form onSubmit={submit} className="space-y-4 sm:space-y-5">
                                 {/* Name Field */}
                                 <div>
                                     <label
                                         htmlFor="name"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                        className="block text-xs font-black text-black uppercase tracking-wider mb-1.5"
                                     >
-                                        Nama
+                                        Nama Lengkap
                                     </label>
                                     <input
                                         id="name"
                                         type="text"
                                         name="name"
                                         value={data.name}
-                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-black focus:ring-0 transition-colors"
+                                        className="w-full px-4 py-3 border-2 border-black rounded-xl font-bold text-black placeholder:text-black/35 focus:outline-none focus:shadow-[3px_3px_0px_0px_#000] transition-all"
                                         autoComplete="name"
                                         autoFocus
                                         onChange={(e) => setData('name', e.target.value)}
@@ -150,7 +201,7 @@ export default function Register() {
                                         required
                                     />
                                     {errors.name && (
-                                        <p className="mt-2 text-sm text-red-600">{errors.name}</p>
+                                        <p className="mt-1.5 text-xs font-bold text-red-600">{errors.name}</p>
                                     )}
                                 </div>
 
@@ -158,23 +209,23 @@ export default function Register() {
                                 <div>
                                     <label
                                         htmlFor="email"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                        className="block text-xs font-black text-black uppercase tracking-wider mb-1.5"
                                     >
-                                        Email
+                                        Alamat Email
                                     </label>
                                     <input
                                         id="email"
                                         type="email"
                                         name="email"
                                         value={data.email}
-                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-black focus:ring-0 transition-colors"
+                                        className="w-full px-4 py-3 border-2 border-black rounded-xl font-bold text-black placeholder:text-black/35 focus:outline-none focus:shadow-[3px_3px_0px_0px_#000] transition-all"
                                         autoComplete="username"
                                         onChange={(e) => setData('email', e.target.value)}
                                         placeholder="nama@email.com"
                                         required
                                     />
                                     {errors.email && (
-                                        <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                                        <p className="mt-1.5 text-xs font-bold text-red-600">{errors.email}</p>
                                     )}
                                 </div>
 
@@ -182,7 +233,7 @@ export default function Register() {
                                 <div>
                                     <label
                                         htmlFor="password"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                        className="block text-xs font-black text-black uppercase tracking-wider mb-1.5"
                                     >
                                         Password
                                     </label>
@@ -192,7 +243,7 @@ export default function Register() {
                                             type={showPassword ? "text" : "password"}
                                             name="password"
                                             value={data.password}
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-black focus:ring-0 transition-colors pr-12"
+                                            className="w-full px-4 py-3 border-2 border-black rounded-xl font-bold text-black placeholder:text-black/35 focus:outline-none focus:shadow-[3px_3px_0px_0px_#000] transition-all pr-12"
                                             autoComplete="new-password"
                                             onChange={(e) => setData('password', e.target.value)}
                                             placeholder="Minimal 8 karakter"
@@ -200,58 +251,47 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black hover:text-gray-700 focus:outline-none cursor-pointer"
                                             onClick={togglePasswordVisibility}
+                                            tabIndex="-1"
                                         >
                                             {showPassword ? (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
+                                                <EyeOff size={18} className="stroke-[2.5]" />
                                             ) : (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                                </svg>
+                                                <Eye size={18} className="stroke-[2.5]" />
                                             )}
                                         </button>
                                     </div>
 
-                                    {/* Password Validation */}
-                                    <div className="mt-3 space-y-2">
-                                        <div className="flex items-center">
-                                            <div className={`w-3 h-3 rounded-full mr-2 ${passwordValidation.minLength ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                            <span className={`text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-500'}`}>
-                                                Minimal 8 karakter
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className={`w-3 h-3 rounded-full mr-2 ${passwordValidation.hasUpperCase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                            <span className={`text-xs ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-gray-500'}`}>
-                                                Mengandung huruf besar (A-Z)
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className={`w-3 h-3 rounded-full mr-2 ${passwordValidation.hasLowerCase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                            <span className={`text-xs ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-gray-500'}`}>
-                                                Mengandung huruf kecil (a-z)
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className={`w-3 h-3 rounded-full mr-2 ${passwordValidation.hasNumber ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                            <span className={`text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-500'}`}>
-                                                Mengandung angka (0-9)
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className={`w-3 h-3 rounded-full mr-2 ${passwordValidation.hasSpecialChar ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                            <span className={`text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-500'}`}>
-                                                Mengandung simbol (!@#$%^&*)
-                                            </span>
-                                        </div>
+                                    {/* Password Validation Checklist (Neobrutalism Box) */}
+                                    <div className="mt-2.5 p-3 bg-gray-50 border-2 border-black rounded-xl space-y-1.5 shadow-[2px_2px_0px_0px_#000]">
+                                        <p className="text-[10px] font-black text-black/60 uppercase tracking-wider mb-1">Syarat Keamanan Password:</p>
+                                        {[
+                                            { valid: passwordValidation.minLength, label: "Minimal 8 karakter" },
+                                            { valid: passwordValidation.hasUpperCase, label: "Mengandung huruf besar (A-Z)" },
+                                            { valid: passwordValidation.hasLowerCase, label: "Mengandung huruf kecil (a-z)" },
+                                            { valid: passwordValidation.hasNumber, label: "Mengandung angka (0-9)" },
+                                            { valid: passwordValidation.hasSpecialChar, label: "Mengandung simbol (!@#$%^&*)" },
+                                        ].map((rule, idx) => (
+                                            <div key={idx} className="flex items-center gap-2">
+                                                <span
+                                                    className={`w-4 h-4 rounded-full border border-black flex items-center justify-center flex-shrink-0 text-[10px] font-black ${
+                                                        rule.valid
+                                                            ? 'bg-[#c5ffbc] text-black'
+                                                            : 'bg-white text-black/30'
+                                                    }`}
+                                                >
+                                                    {rule.valid ? <Check size={10} className="stroke-[3]" /> : "•"}
+                                                </span>
+                                                <span className={`text-xs font-bold ${rule.valid ? 'text-black' : 'text-black/50'}`}>
+                                                    {rule.label}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
 
                                     {errors.password && (
-                                        <p className="mt-2 text-sm text-red-600">{errors.password}</p>
+                                        <p className="mt-1.5 text-xs font-bold text-red-600">{errors.password}</p>
                                     )}
                                 </div>
 
@@ -259,7 +299,7 @@ export default function Register() {
                                 <div>
                                     <label
                                         htmlFor="password_confirmation"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                        className="block text-xs font-black text-black uppercase tracking-wider mb-1.5"
                                     >
                                         Konfirmasi Password
                                     </label>
@@ -269,12 +309,12 @@ export default function Register() {
                                             type={showConfirmPassword ? "text" : "password"}
                                             name="password_confirmation"
                                             value={data.password_confirmation}
-                                            className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-0 transition-colors pr-12 ${
+                                            className={`w-full px-4 py-3 border-2 border-black rounded-xl font-bold text-black placeholder:text-black/35 focus:outline-none transition-all pr-12 ${
                                                 passwordMatch === null
-                                                    ? 'border-gray-200 focus:border-black'
+                                                    ? 'focus:shadow-[3px_3px_0px_0px_#000]'
                                                     : passwordMatch
-                                                    ? 'border-green-500 focus:border-green-500'
-                                                    : 'border-red-500 focus:border-red-500'
+                                                    ? 'bg-[#c5ffbc]/30 focus:shadow-[3px_3px_0px_0px_#000]'
+                                                    : 'bg-[#FF6B7A]/20 focus:shadow-[3px_3px_0px_0px_#000]'
                                             }`}
                                             autoComplete="new-password"
                                             onChange={(e) => setData('password_confirmation', e.target.value)}
@@ -283,45 +323,45 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black hover:text-gray-700 focus:outline-none cursor-pointer"
                                             onClick={toggleConfirmPasswordVisibility}
+                                            tabIndex="-1"
                                         >
                                             {showConfirmPassword ? (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
+                                                <EyeOff size={18} className="stroke-[2.5]" />
                                             ) : (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                                </svg>
+                                                <Eye size={18} className="stroke-[2.5]" />
                                             )}
                                         </button>
                                     </div>
 
                                     {/* Password Match Indicator */}
                                     {passwordMatch !== null && (
-                                        <div className="mt-2 flex items-center">
-                                            {passwordMatch ? (
-                                                <>
-                                                    <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    <span className="text-xs text-green-600">Password cocok</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-4 h-4 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                    <span className="text-xs text-red-600">Password tidak cocok</span>
-                                                </>
-                                            )}
+                                        <div className="mt-2">
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-full border border-black shadow-[1px_1px_0px_0px_#000] ${
+                                                    passwordMatch
+                                                        ? 'bg-[#c5ffbc] text-black'
+                                                        : 'bg-[#FF6B7A] text-white'
+                                                }`}
+                                            >
+                                                {passwordMatch ? (
+                                                    <>
+                                                        <Check size={12} className="stroke-[3]" />
+                                                        <span>Password cocok</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <X size={12} className="stroke-[3]" />
+                                                        <span>Password belum cocok</span>
+                                                    </>
+                                                )}
+                                            </span>
                                         </div>
                                     )}
 
                                     {errors.password_confirmation && (
-                                        <p className="mt-2 text-sm text-red-600">{errors.password_confirmation}</p>
+                                        <p className="mt-1.5 text-xs font-bold text-red-600">{errors.password_confirmation}</p>
                                     )}
                                 </div>
 
@@ -329,37 +369,29 @@ export default function Register() {
                                 <button
                                     type="submit"
                                     disabled={processing || !isPasswordValid || !passwordMatch}
-                                    className="w-full bg-black text-white py-3 rounded-full font-medium text-base hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                                    className="w-full py-3.5 px-6 rounded-full border-2 border-black bg-[#7c98ff] hover:bg-[#6a88fc] text-black font-black text-base shadow-[3px_3px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer mt-5"
                                 >
-                                    {processing ? 'Memproses...' : 'Daftar Sekarang'}
+                                    <span>{processing ? 'Mendaftarkan...' : 'Daftar Sekarang'}</span>
+                                    {!processing && <ArrowRight size={18} className="stroke-[3]" />}
                                 </button>
 
-                                {/* Login Link */}
-                                <div className="text-center pt-4">
-                                    <Link
-                                        href={route('login')}
-                                        className="text-sm text-gray-600 hover:text-black transition-colors"
-                                    >
-                                        Sudah punya akun? <span className="font-semibold">Masuk</span>
-                                    </Link>
+                                {/* Login Link Footer */}
+                                <div className="text-center pt-3 border-t-2 border-black/10">
+                                    <p className="text-xs font-bold text-black/70">
+                                        Sudah punya akun?{' '}
+                                        <Link
+                                            href={route('login')}
+                                            className="font-black text-black underline underline-offset-4 hover:text-[#5B7FF0] transition-colors"
+                                        >
+                                            Masuk di Sini
+                                        </Link>
+                                    </p>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </main>
             </div>
-
-            <style jsx>{`
-                @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
-
-                h2 {
-                    font-family: 'Libre Baskerville', serif;
-                }
-
-                body {
-                    font-family: 'Inter', sans-serif;
-                }
-            `}</style>
         </>
     );
 }

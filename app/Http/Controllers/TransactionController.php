@@ -3,9 +3,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\Relation;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +31,7 @@ class TransactionController extends Controller
         $user = Auth::user();
         $relations = $user->relations;
 
-        return Inertia::render('Transactions/TransactionPage', [
+        return Inertia::render('TransactionPage', [
             'relations' => [
                 'data' => $relations,
             ],
@@ -98,7 +100,7 @@ class TransactionController extends Controller
         // Get all user's relations untuk dropdown
         $relations = $user->relations()->get();
 
-        return Inertia::render('Transactions/TransactionPage', [
+        return Inertia::render('TransactionPage', [
             'relations' => $relations,
             'currentRelation' => $relation,
             'pemasukan' => $pemasukan,
@@ -114,7 +116,7 @@ class TransactionController extends Controller
             ],
             'search' => $search,
             'is_owner' => $user->isOwnerOf($relation->id),
-            'current_user_id' => $user->id, // TAMBAHAN: Kirim user ID ke frontend
+            'current_user_id' => $user->id,
         ]);
     }
 
@@ -151,8 +153,9 @@ class TransactionController extends Controller
             try {
                 $file = $request->file('bukti');
                 $fileName = time() . '_' . $user->id . '_' . $file->getClientOriginalName();
-                // Simpan ke storage/app/private/bukti-transaksi
-                $buktiPath = $file->storeAs('bukti-transaksi', $fileName, 'private');
+
+                // Gunakan disk 'local' yang sudah dikonfigurasi ke storage/app/private
+                $buktiPath = $file->storeAs('bukti-transaksi', $fileName, 'local');
 
                 Log::info('Bukti file uploaded', [
                     'path' => $buktiPath,
@@ -161,33 +164,58 @@ class TransactionController extends Controller
             } catch (\Exception $e) {
                 Log::error('Failed to upload bukti', [
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                     'user_id' => $user->id
                 ]);
-                return back()->with('error', 'Gagal mengupload bukti transaksi.');
+                return back()->with('error', 'Gagal mengupload bukti transaksi: ' . $e->getMessage());
             }
         }
 
         // Buat transaksi
-        $transaction = Transaction::create([
-            'relation_id' => $relation->id,
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'jenis' => $validated['jenis'],
-            'jumlah' => $validated['jumlah'],
-            'catatan' => $validated['catatan'] ?? null,
-            'bukti' => $buktiPath,
-            'waktu_transaksi' => $validated['waktu_transaksi'],
-        ]);
+        try {
+            $transaction = Transaction::create([
+                'relation_id' => $relation->id,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'jenis' => $validated['jenis'],
+                'jumlah' => $validated['jumlah'],
+                'catatan' => $validated['catatan'] ?? null,
+                'bukti' => $buktiPath,
+                'waktu_transaksi' => $validated['waktu_transaksi'],
+            ]);
 
-        Log::info('Transaction created', [
-            'transaction_id' => $transaction->id,
-            'user_id' => $user->id
-        ]);
+            Log::info('Transaction created', [
+                'transaction_id' => $transaction->id,
+                'user_id' => $user->id
+            ]);
 
-        $jenisText = $transaction->isPemasukan() ? 'Pemasukan' : 'Pengeluaran';
+            $jenisText = $transaction->isPemasukan() ? 'Pemasukan' : 'Pengeluaran';
 
-        return redirect()->route('transactions.index', $relation)
-            ->with('success', "{$jenisText} sebesar {$transaction->formatted_jumlah} berhasil ditambahkan!");
+            // Kirim notifikasi ke anggota grup
+            NotificationService::sendToGroupMembers(
+                $relation,
+                $user->id,
+                Notification::TYPE_TRANSACTION,
+                "Transaksi Baru di {$relation->nama}",
+                "{$user->name} menambahkan {$jenisText} sebesar {$transaction->formatted_jumlah}.",
+                route('transactions.index', $relation, false)
+            );
+
+            return redirect()->route('transactions.index', $relation)
+                ->with('success', "{$jenisText} sebesar {$transaction->formatted_jumlah} berhasil ditambahkan!");
+        } catch (\Exception $e) {
+            // Hapus file bukti jika transaksi gagal dibuat
+            if ($buktiPath) {
+                Storage::disk('local')->delete($buktiPath);
+            }
+
+            Log::error('Failed to create transaction', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id
+            ]);
+
+            return back()->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -205,7 +233,7 @@ class TransactionController extends Controller
 
         // Cek apakah transaction memang milik relation ini
         if ($transaction->relation_id !== $relation->id) {
-            abort(404);
+            abort(404, 'Transaksi tidak ditemukan.');
         }
 
         $transaction->load('user:id,name');
@@ -216,7 +244,8 @@ class TransactionController extends Controller
                 'nama' => $relation->nama,
             ],
             'transaction' => $this->formatTransaction($transaction, $user),
-            'can_edit' => $transaction->user_id === $user->id, // PERUBAHAN: Lebih eksplisit
+            'can_edit' => $transaction->user_id === $user->id,
+            'can_delete' => $transaction->user_id === $user->id,
         ]);
     }
 
@@ -250,10 +279,10 @@ class TransactionController extends Controller
                 'transaction_relation_id' => $transaction->relation_id,
                 'url_relation_id' => $relation->id
             ]);
-            abort(404);
+            abort(404, 'Transaksi tidak ditemukan.');
         }
 
-        // PERUBAHAN: Cek ownership secara eksplisit
+        // CRITICAL: Cek ownership - hanya pembuat yang bisa edit
         if ($transaction->user_id !== $user->id) {
             Log::warning('User not owner of transaction', [
                 'user_id' => $user->id,
@@ -273,53 +302,62 @@ class TransactionController extends Controller
 
         // Handle bukti file
         $buktiPath = $transaction->bukti;
+        $oldBuktiPath = $buktiPath; // Simpan untuk rollback jika error
 
         try {
             // Hapus bukti lama jika ada flag remove_bukti
             if ($request->input('remove_bukti') && $buktiPath) {
-                Storage::disk('private')->delete($buktiPath);
+                Storage::disk('local')->delete($buktiPath);
                 $buktiPath = null;
-                Log::info('Old bukti removed', ['path' => $transaction->bukti]);
+                Log::info('Old bukti removed', ['path' => $oldBuktiPath]);
             }
 
             // Upload bukti baru jika ada
             if ($request->hasFile('bukti')) {
-                // Hapus bukti lama
+                // Hapus bukti lama jika ada
                 if ($buktiPath) {
-                    Storage::disk('private')->delete($buktiPath);
+                    Storage::disk('local')->delete($buktiPath);
                     Log::info('Old bukti deleted before upload', ['path' => $buktiPath]);
                 }
 
                 $file = $request->file('bukti');
                 $fileName = time() . '_' . $user->id . '_' . $file->getClientOriginalName();
-                $buktiPath = $file->storeAs('bukti-transaksi', $fileName, 'private');
+                $buktiPath = $file->storeAs('bukti-transaksi', $fileName, 'local');
 
                 Log::info('New bukti uploaded', ['path' => $buktiPath]);
             }
-        } catch (\Exception $e) {
-            Log::error('Bukti file handling error', [
-                'error' => $e->getMessage(),
+
+            // Update transaksi
+            $transaction->update([
+                'jenis' => $validated['jenis'],
+                'jumlah' => $validated['jumlah'],
+                'catatan' => $validated['catatan'] ?? null,
+                'bukti' => $buktiPath,
+                'waktu_transaksi' => $validated['waktu_transaksi'],
+            ]);
+
+            Log::info('Transaction updated', [
+                'transaction_id' => $transaction->id,
                 'user_id' => $user->id
             ]);
-            return back()->with('error', 'Gagal mengelola file bukti.');
+
+            return redirect()->route('transactions.index', $relation)
+                ->with('success', 'Transaksi berhasil diupdate!');
+
+        } catch (\Exception $e) {
+            Log::error('Update transaction error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $user->id
+            ]);
+
+            // Rollback: restore old bukti jika ada error dan file baru sudah diupload
+            if ($request->hasFile('bukti') && $buktiPath && $buktiPath !== $oldBuktiPath) {
+                Storage::disk('local')->delete($buktiPath);
+            }
+
+            return back()->with('error', 'Gagal mengupdate transaksi: ' . $e->getMessage());
         }
-
-        // Update transaksi
-        $transaction->update([
-            'jenis' => $validated['jenis'],
-            'jumlah' => $validated['jumlah'],
-            'catatan' => $validated['catatan'] ?? null,
-            'bukti' => $buktiPath,
-            'waktu_transaksi' => $validated['waktu_transaksi'],
-        ]);
-
-        Log::info('Transaction updated', [
-            'transaction_id' => $transaction->id,
-            'user_id' => $user->id
-        ]);
-
-        return redirect()->route('transactions.index', $relation)
-            ->with('success', 'Transaksi berhasil diupdate!');
     }
 
     /**
@@ -352,10 +390,10 @@ class TransactionController extends Controller
                 'transaction_relation_id' => $transaction->relation_id,
                 'url_relation_id' => $relation->id
             ]);
-            abort(404);
+            abort(404, 'Transaksi tidak ditemukan.');
         }
 
-        // PERUBAHAN: Cek ownership secara eksplisit
+        // CRITICAL: Cek ownership - hanya pembuat yang bisa delete
         if ($transaction->user_id !== $user->id) {
             Log::warning('User not owner of transaction on delete', [
                 'user_id' => $user->id,
@@ -367,16 +405,26 @@ class TransactionController extends Controller
         $jenisText = $transaction->isPemasukan() ? 'Pemasukan' : 'Pengeluaran';
         $jumlah = $transaction->formatted_jumlah;
 
-        // Hard delete (akan trigger event deleting yang hapus file)
-        $transaction->delete();
+        try {
+            // Hard delete (akan trigger event deleting yang hapus file)
+            $transaction->delete();
 
-        Log::info('Transaction deleted', [
-            'transaction_id' => $transaction->id,
-            'user_id' => $user->id
-        ]);
+            Log::info('Transaction deleted', [
+                'transaction_id' => $transaction->id,
+                'user_id' => $user->id
+            ]);
 
-        return redirect()->route('transactions.index', $relation)
-            ->with('success', "{$jenisText} sebesar {$jumlah} berhasil dihapus!");
+            return redirect()->route('transactions.index', $relation)
+                ->with('success', "{$jenisText} sebesar {$jumlah} berhasil dihapus!");
+
+        } catch (\Exception $e) {
+            Log::error('Delete transaction error', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id
+            ]);
+
+            return back()->with('error', 'Gagal menghapus transaksi: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -436,7 +484,7 @@ class TransactionController extends Controller
 
         // Cek apakah transaction memang milik relation ini
         if ($transaction->relation_id !== $relation->id) {
-            abort(404);
+            abort(404, 'Transaksi tidak ditemukan.');
         }
 
         // Cek apakah bukti exists
@@ -446,6 +494,14 @@ class TransactionController extends Controller
 
         // Get file path dari private storage
         $filePath = $transaction->getBuktiPath();
+
+        if (!file_exists($filePath)) {
+            Log::error('Bukti file not found', [
+                'path' => $filePath,
+                'transaction_id' => $transaction->id
+            ]);
+            abort(404, 'File bukti tidak ditemukan di server.');
+        }
 
         // Get mime type
         $mimeType = $transaction->getBuktiMimeType();
@@ -472,7 +528,7 @@ class TransactionController extends Controller
 
         // Cek apakah transaction memang milik relation ini
         if ($transaction->relation_id !== $relation->id) {
-            abort(404);
+            abort(404, 'Transaksi tidak ditemukan.');
         }
 
         // Cek apakah bukti exists
@@ -482,6 +538,14 @@ class TransactionController extends Controller
 
         // Get file path dari private storage
         $filePath = $transaction->getBuktiPath();
+
+        if (!file_exists($filePath)) {
+            Log::error('Bukti file not found for download', [
+                'path' => $filePath,
+                'transaction_id' => $transaction->id
+            ]);
+            abort(404, 'File bukti tidak ditemukan di server.');
+        }
 
         // Get original filename
         $originalName = basename($transaction->bukti);
@@ -498,7 +562,7 @@ class TransactionController extends Controller
 
     /**
      * Helper method untuk format transaction data
-     * PERUBAHAN: Pengecekan ownership lebih eksplisit
+     * OPTIMIZED: Pengecekan ownership yang jelas dan konsisten
      */
     private function formatTransaction(Transaction $transaction, User $user): array
     {
@@ -506,16 +570,16 @@ class TransactionController extends Controller
             ? Date::parse($transaction->waktu_transaksi)
             : $transaction->waktu_transaksi;
 
-        // PERUBAHAN: Pengecekan ownership lebih eksplisit dan di-log
-        $canEdit = $transaction->user_id === $user->id;
-        $canDelete = $transaction->user_id === $user->id;
+        // CRITICAL: Ownership check - hanya pembuat yang bisa edit/delete
+        $isOwner = $transaction->user_id === $user->id;
 
         Log::debug('Format transaction permissions', [
             'transaction_id' => $transaction->id,
             'transaction_user_id' => $transaction->user_id,
             'current_user_id' => $user->id,
-            'can_edit' => $canEdit,
-            'can_delete' => $canDelete
+            'is_owner' => $isOwner,
+            'can_edit' => $isOwner,
+            'can_delete' => $isOwner
         ]);
 
         return [
@@ -543,9 +607,9 @@ class TransactionController extends Controller
                 'id' => $transaction->user->id,
                 'name' => $transaction->user->name,
             ] : null,
-            'user_id' => $transaction->user_id, // TAMBAHAN: Kirim user_id eksplisit
-            'can_edit' => $canEdit,
-            'can_delete' => $canDelete,
+            'user_id' => $transaction->user_id,
+            'can_edit' => $isOwner,    // Hanya owner yang bisa edit
+            'can_delete' => $isOwner,  // Hanya owner yang bisa delete
             'created_at' => $transaction->created_at->format('d M Y H:i'),
         ];
     }

@@ -1,5 +1,12 @@
+// resources/js/Pages/Welcome.jsx
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState, useRef } from 'react';
+import {
+    Users, Building2, Zap, Home, Clock, BarChart3, LineChart,
+    ArrowUpRight, ArrowUp, Check, Sparkles, ShieldCheck, MessageCircle,
+    PiggyBank, Wallet, TrendingUp, Star, ChevronRight
+} from 'lucide-react';
+import Logo from '@/Layouts/Logo';
 
 export default function Welcome({ auth }) {
     const [isVisible, setIsVisible] = useState(false);
@@ -19,10 +26,9 @@ export default function Welcome({ auth }) {
     useEffect(() => {
         setIsVisible(true);
 
-        // Reduced button animation delay from 1200ms to 600ms
         const buttonTimer = setTimeout(() => {
             setShowButtons(true);
-        }, 600);
+        }, 400);
 
         const observerOptions = {
             threshold: 0.2,
@@ -48,7 +54,6 @@ export default function Welcome({ auth }) {
             }
         });
 
-        // Scroll event listener
         const handleScroll = () => {
             const heroSection = document.querySelector('section');
             if (heroSection) {
@@ -66,7 +71,6 @@ export default function Welcome({ auth }) {
         };
     }, []);
 
-    // Function to scroll to top
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
@@ -74,145 +78,141 @@ export default function Welcome({ auth }) {
         });
     };
 
-    // Icon Components
-    const FamilyIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-    );
-
-    const OrganizationIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-    );
-
-    const StartupIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-    );
-
-    const RoommatesIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-    );
-
-    const RealTimeIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-    );
-
-    const BudgetIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-    );
-
-    const AnalyticsIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-    );
-
-    const CollaborationIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-    );
-
-    const ScrollToTopIcon = () => (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-        </svg>
-    );
-
     return (
         <>
-            <Head title="Group Finances" />
+            <Head title="Group Finances - Kelola Keuangan Kolaboratif" />
             <div className="min-h-screen bg-[#C8F5C8] overflow-x-hidden">
-                {/* Header/Logo */}
+
+                {/* Header/Logo Neobrutalism */}
                 <header className="px-4 sm:px-6 lg:px-20 pt-6 sm:pt-8 pb-4">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-xl sm:text-2xl">G</span>
-                        </div>
-                        <h1 className="text-black font-bold text-lg sm:text-xl md:text-2xl tracking-wide">
-                            GROUP FINANCES
-                        </h1>
+                    <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <Logo size="lg" href="/" showBadge={true} hideTextOnMobile={true} />
+                        <nav className="flex items-center gap-3">
+                            {auth?.user ? (
+                                <Link
+                                    href="/dashboard"
+                                    className="bg-black text-white px-5 py-2 rounded-full font-black text-sm border-2 border-black shadow-[3px_3px_0px_0px_#555] hover:shadow-[4px_4px_0px_0px_#555] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all flex items-center gap-1.5"
+                                >
+                                    Dashboard <ArrowUpRight size={14} />
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link
+                                        href="/login"
+                                        className="text-black font-black text-sm px-4 py-2 rounded-full border-2 border-black bg-white shadow-[2px_2px_0px_0px_#000] hover:shadow-[3px_3px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                                    >
+                                        Masuk
+                                    </Link>
+                                    <Link
+                                        href="/register"
+                                        className="bg-black text-white px-5 py-2 rounded-full font-black text-sm border-2 border-black shadow-[3px_3px_0px_0px_#555] hover:shadow-[4px_4px_0px_0px_#555] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all flex items-center gap-1.5"
+                                    >
+                                        Daftar Gratis <ChevronRight size={14} />
+                                    </Link>
+                                </>
+                            )}
+                        </nav>
                     </div>
                 </header>
 
-                {/* Hero Section - Reduced Height */}
-                <section className="px-4 sm:px-6 lg:px-20 py-6 sm:py-8 lg:py-10">
+                {/* ===== HERO SECTION ===== */}
+                <section className="px-4 sm:px-6 lg:px-20 py-8 sm:py-10 lg:py-14">
                     <div className="max-w-7xl w-full mx-auto">
-                        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
+
+                        <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-14 items-center">
                             {/* Left Section - Text Content */}
-                            <div className="space-y-4 sm:space-y-6 lg:space-y-7 text-center lg:text-left">
+                            <div className="space-y-5 sm:space-y-6 lg:space-y-7 text-center lg:text-left">
                                 {/* Main Heading */}
-                                <h2
-                                    className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-normal text-black leading-tight transition-all duration-1000 ${
+                                <h1
+                                    className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-black leading-[1.05] transition-all duration-1000 ${
                                         isVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
                                     }`}
+                                    style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
                                 >
-                                    Kelola keuangan kelompok Anda dengan mudah dan transparan.
-                                </h2>
+                                    Kelola{' '}
+                                    <span className="relative inline-block">
+                                        <span className="relative z-10">Keuangan</span>
+                                        <span className="absolute bottom-1 left-0 w-full h-4 bg-[#FDBB4E] -z-0 -rotate-1 border border-black" />
+                                    </span>{' '}
+                                    Kelompok Anda.
+                                </h1>
 
                                 {/* Description */}
                                 <p
-                                    className={`text-black text-base sm:text-lg lg:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0 transition-all duration-1000 delay-200 ${
+                                    className={`text-black font-semibold text-base sm:text-lg lg:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0 transition-all duration-1000 delay-200 ${
                                         isVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
                                     }`}
                                 >
-                                    Platform manajemen keuangan kolaboratif untuk pasangan, keluarga, organisasi, komunitas, dan kelompok lainnya. Transparansi penuh untuk hubungan yang lebih harmonis.
+                                    Platform manajemen keuangan kolaboratif untuk pasangan, keluarga, organisasi, komunitas, dan tim kerja. Transparansi penuh untuk hubungan finansial yang lebih harmonis.
                                 </p>
 
-                                {/* Target Users */}
-                                <div className="flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start">
-                                    {['Pasangan', 'Keluarga', 'Organisasi', 'Komunitas', 'Startup Team', 'Roommates'].map((item, index) => (
+                                {/* Key Benefits */}
+                                <div className={`flex flex-col gap-2.5 text-left transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                                    {[
+                                        { icon: <ShieldCheck size={15} />, text: 'Data aman & terenkripsi penuh', color: 'bg-[#C8F5C8]' },
+                                        { icon: <MessageCircle size={15} />, text: 'Chat & notifikasi realtime', color: 'bg-[#7c98ff]' },
+                                        { icon: <BarChart3 size={15} />, text: 'Laporan & analitik otomatis', color: 'bg-[#FDBB4E]' },
+                                    ].map((b, i) => (
+                                        <div key={i} className="inline-flex items-center gap-2 mx-auto lg:mx-0">
+                                            <span className={`w-6 h-6 ${b.color} border border-black rounded-md flex items-center justify-center flex-shrink-0`}>
+                                                {b.icon}
+                                            </span>
+                                            <span className="text-black font-bold text-sm">{b.text}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Target Users Badges */}
+                                <div className="flex flex-wrap gap-2 sm:gap-2.5 justify-center lg:justify-start">
+                                    {[
+                                        { label: 'Pasangan', icon: <Users size={11} /> },
+                                        { label: 'Keluarga', icon: <Home size={11} /> },
+                                        { label: 'Organisasi', icon: <Building2 size={11} /> },
+                                        { label: 'Komunitas', icon: <Users size={11} /> },
+                                        { label: 'Startup Team', icon: <Zap size={11} /> },
+                                        { label: 'Roommates', icon: <Home size={11} /> },
+                                    ].map((item, index) => (
                                         <span
-                                            key={item}
-                                            className="bg-white/80 text-black px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-medium border border-black/20"
+                                            key={item.label}
+                                            className="bg-white text-black px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-xs font-black border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
                                             style={{
-                                                animationDelay: `${index * 100}ms`,
-                                                animation: showButtons ? 'fadeInUp 0.5s ease-out forwards' : 'none'
+                                                animationDelay: `${index * 80}ms`,
+                                                animation: showButtons ? 'fadeInUp 0.4s ease-out forwards' : 'none'
                                             }}
                                         >
-                                            {item}
+                                            {item.icon}
+                                            {item.label}
                                         </span>
                                     ))}
                                 </div>
 
-                                {/* Buttons - Reduced animation duration from 700ms to 400ms */}
-                                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+                                {/* Action Buttons */}
+                                <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 justify-center lg:justify-start pt-2">
                                     {auth?.user ? (
                                         <Link
                                             href="/dashboard"
-                                            className={`bg-white text-black px-8 sm:px-10 py-3 sm:py-4 rounded-full font-medium text-base sm:text-lg hover:bg-gray-100 transition-all duration-400 shadow-sm text-center ${
+                                            className={`bg-black text-white px-8 sm:px-10 py-4 rounded-2xl font-black text-base sm:text-lg border-2 border-black shadow-[5px_5px_0px_0px_#555] hover:shadow-[7px_7px_0px_0px_#555] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all text-center flex items-center justify-center gap-2 ${
                                                 showButtons ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
                                             }`}
                                         >
-                                            Dashboard
+                                            Buka Dashboard <ArrowUpRight size={18} />
                                         </Link>
                                     ) : (
                                         <>
                                             <Link
                                                 href="/register"
-                                                className={`bg-white text-black px-8 sm:px-10 py-3 sm:py-4 rounded-full font-medium text-base sm:text-lg hover:bg-gray-100 transition-all duration-400 shadow-sm text-center ${
+                                                className={`bg-black text-white px-8 sm:px-10 py-4 rounded-2xl font-black text-base sm:text-lg border-2 border-black shadow-[5px_5px_0px_0px_#555] hover:shadow-[7px_7px_0px_0px_#555] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all text-center flex items-center justify-center gap-2 ${
                                                     showButtons ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
                                                 }`}
-                                                style={{ transitionDelay: showButtons ? '0ms' : '0ms' }}
                                             >
-                                                Mulai Sekarang
+                                                Mulai Gratis <ArrowUpRight size={18} />
                                             </Link>
                                             <Link
                                                 href="/login"
-                                                className={`bg-transparent text-black px-8 sm:px-10 py-3 sm:py-4 rounded-full font-medium text-base sm:text-lg border-2 border-black hover:bg-white transition-all duration-400 text-center ${
+                                                className={`bg-white text-black px-8 sm:px-10 py-4 rounded-2xl font-black text-base sm:text-lg border-2 border-black shadow-[5px_5px_0px_0px_#000] hover:shadow-[7px_7px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all text-center ${
                                                     showButtons ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
                                                 }`}
-                                                style={{ transitionDelay: showButtons ? '100ms' : '0ms' }}
+                                                style={{ transitionDelay: showButtons ? '80ms' : '0ms' }}
                                             >
                                                 Masuk
                                             </Link>
@@ -221,110 +221,180 @@ export default function Welcome({ auth }) {
                                 </div>
                             </div>
 
-                            {/* Right Section - Image */}
-                            <div className="relative flex justify-center lg:justify-end">
-                                <div
-                                    className={`relative w-full max-w-sm lg:max-w-lg transition-all duration-1000 ${
-                                        isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-                                    }`}
-                                >
-                                    <img
-                                        src="/assets/couple.png"
-                                        alt="Group of people managing finances together"
-                                        className="w-full h-auto object-contain"
-                                        loading="lazy"
-                                    />
+                            {/* Right Section - Visual Hero Card */}
+                            <div
+                                className={`relative flex justify-center lg:justify-end transition-all duration-1000 ${
+                                    isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+                                }`}
+                            >
+                                {/* Decorative bg blocks */}
+                                <div className="absolute -top-4 -right-4 w-40 h-40 bg-[#FDBB4E] border-2 border-black rounded-3xl -z-10" />
+                                <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-[#7c98ff] border-2 border-black rounded-2xl -z-10" />
+
+                                <div className="relative w-full max-w-sm lg:max-w-md bg-white border-2 border-black rounded-3xl shadow-[8px_8px_0px_0px_#000] overflow-hidden">
+                                    {/* Card Header */}
+                                    <div className="bg-[#7c98ff] border-b-2 border-black px-5 py-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-[#FF6B7A] border border-black" />
+                                            <div className="w-3 h-3 rounded-full bg-[#FDBB4E] border border-black" />
+                                            <div className="w-3 h-3 rounded-full bg-[#C8F5C8] border border-black" />
+                                        </div>
+                                        <span className="font-black text-black text-xs uppercase tracking-wider">Kas Keluarga Budi</span>
+                                        <div className="w-6 h-6 bg-[#C8F5C8] border border-black rounded-full flex items-center justify-center">
+                                            <Users size={12} className="text-black" />
+                                        </div>
+                                    </div>
+
+                                    {/* Card Body */}
+                                    <div className="p-5 space-y-4">
+                                        {/* Balance */}
+                                        <div className="bg-[#C8F5C8] border-2 border-black rounded-2xl p-4 shadow-[3px_3px_0px_0px_#000]">
+                                            <p className="text-black/60 font-bold text-xs uppercase tracking-wider mb-1">Total Saldo</p>
+                                            <p className="text-black font-black text-3xl">Rp 4.750.000</p>
+                                            <div className="flex items-center gap-1 mt-1">
+                                                <TrendingUp size={12} className="text-green-600" />
+                                                <span className="text-green-600 font-black text-xs">+12% bulan ini</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Recent Transactions */}
+                                        <div>
+                                            <p className="text-black font-black text-xs uppercase tracking-wider mb-2.5">Transaksi Terbaru</p>
+                                            <div className="space-y-2">
+                                                {[
+                                                    { label: 'Iuran Bulanan', amount: '+500.000', type: 'in', icon: <PiggyBank size={13} />, color: 'bg-[#C8F5C8]' },
+                                                    { label: 'Belanja Dapur', amount: '-185.000', type: 'out', icon: <Wallet size={13} />, color: 'bg-[#FF6B7A]' },
+                                                    { label: 'Listrik & Air', amount: '-220.000', type: 'out', icon: <Zap size={13} />, color: 'bg-[#FDBB4E]' },
+                                                ].map((tx, i) => (
+                                                    <div key={i} className="flex items-center justify-between bg-gray-50 border border-black/10 rounded-xl px-3 py-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-6 h-6 ${tx.color} border border-black rounded-lg flex items-center justify-center`}>
+                                                                {tx.icon}
+                                                            </div>
+                                                            <span className="text-black font-bold text-xs">{tx.label}</span>
+                                                        </div>
+                                                        <span className={`font-black text-xs ${tx.type === 'in' ? 'text-green-600' : 'text-red-500'}`}>
+                                                            {tx.amount}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Members */}
+                                        <div className="flex items-center justify-between border-t-2 border-dashed border-black/20 pt-3">
+                                            <div className="flex -space-x-2">
+                                                {['B', 'S', 'R', 'A'].map((initial, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="w-7 h-7 rounded-full border-2 border-black flex items-center justify-center font-black text-xs text-black"
+                                                        style={{ background: ['#7c98ff', '#FDBB4E', '#FF6B7A', '#C8F5C8'][i] }}
+                                                    >
+                                                        {initial}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <span className="text-black/60 font-black text-xs">4 anggota aktif</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Why Section - Pentingnya Mengelola Keuangan */}
+                {/* Why Section */}
                 <section
                     ref={sectionRefs.why}
                     data-section="why"
-                    className="bg-[#7c98ff] relative overflow-hidden"
+                    className="bg-[#7c98ff] border-y-2 border-black relative overflow-hidden py-12 sm:py-16"
                 >
-                    <div className="max-w-7xl w-full mx-auto">
-                        <div className="grid lg:grid-cols-2 gap-0 items-center min-h-[450px]">
+                    <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-20">
+                        <div className="grid lg:grid-cols-2 gap-8 items-center">
 
                             {/* Left Section - Image */}
-                            <div className={`relative flex items-center justify-center order-2 lg:order-1 p-6 lg:p-10 transition-all duration-1000 ${
+                            <div className={`relative flex items-center justify-center order-2 lg:order-1 transition-all duration-1000 ${
                                 visibleSections.why ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
                             }`}>
-                                <div className="relative w-full max-w-md lg:max-w-lg max-h-[400px]">
+                                <div className="relative w-full max-w-md lg:max-w-lg bg-white border-2 border-black rounded-3xl p-3 shadow-[6px_6px_0px_0px_#000]">
                                     <img
                                         src="/assets/imp.png"
                                         alt="Team collaboration in finance management"
-                                        className="relative w-full h-auto object-contain z-10 rounded-2xl"
+                                        className="w-full h-auto object-contain rounded-2xl"
                                         loading="lazy"
                                     />
                                 </div>
                             </div>
 
                             {/* Right Section - Text Content */}
-                            <div className={`flex flex-col justify-center space-y-6 sm:space-y-8 text-center lg:text-left order-1 lg:order-2 px-6 lg:px-12 py-10 sm:py-14 transition-all duration-1000 delay-200 ${
+                            <div className={`flex flex-col justify-center space-y-6 text-center lg:text-left order-1 lg:order-2 transition-all duration-1000 delay-200 ${
                                 visibleSections.why ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
                             }`}>
-                                <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-normal text-white leading-tight">
+                                <h2
+                                    className="text-4xl sm:text-5xl lg:text-6xl font-black text-black leading-tight"
+                                    style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+                                >
                                     Mengapa Penting?
                                 </h2>
-                                <p className="text-white text-lg sm:text-xl lg:text-2xl leading-relaxed font-medium">
-                                    Transparansi keuangan dalam kelompok membangun kepercayaan, mencegah konflik,
-                                    dan memperkuat kolaborasi untuk mencapai tujuan bersama.
+                                <p className="text-black text-lg sm:text-xl leading-relaxed font-bold">
+                                    Transparansi keuangan dalam kelompok membangun kepercayaan, mencegah konflik finansial, dan memperkuat kerja sama untuk mencapai tujuan bersama.
                                 </p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white/20 rounded-2xl p-4 text-center">
-                                        <p className="text-white font-bold text-xl">95%</p>
-                                        <p className="text-white text-sm">Hindari Konflik</p>
+                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                    <div className="bg-white border-2 border-black rounded-2xl p-4 text-center shadow-[4px_4px_0px_0px_#000]">
+                                        <p className="text-black font-black text-3xl">95%</p>
+                                        <p className="text-black/80 font-bold text-xs sm:text-sm mt-1">Hindari Konflik</p>
                                     </div>
-                                    <div className="bg-white/20 rounded-2xl p-4 text-center">
-                                        <p className="text-white font-bold text-xl">3x</p>
-                                        <p className="text-white text-sm">Lebih Efisien</p>
+                                    <div className="bg-[#c5ffbc] border-2 border-black rounded-2xl p-4 text-center shadow-[4px_4px_0px_0px_#000]">
+                                        <p className="text-black font-black text-3xl">3x</p>
+                                        <p className="text-black/80 font-bold text-xs sm:text-sm mt-1">Lebih Efisien</p>
                                     </div>
                                 </div>
-                            </div>
+            </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Features Section */}
-                <section className="bg-[#c5ffbc] px-4 sm:px-6 lg:px-20 py-16 sm:py-20 lg:py-24">
+                <section className="bg-[#c5ffbc] px-4 sm:px-6 lg:px-20 py-16 sm:py-20 lg:py-24 border-b-2 border-black">
                     <div className="max-w-7xl w-full mx-auto">
-                        <h2
-                            ref={sectionRefs.features}
-                            data-section="features"
-                            className={`text-4xl sm:text-5xl md:text-6xl font-serif font-normal text-black mb-12 sm:mb-16 text-center lg:text-left transition-all duration-1000 ${
-                                visibleSections.features ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-                            }`}
-                        >
-                            Fitur Unggulan
-                        </h2>
+                        <div className="mb-12 sm:mb-16 text-center lg:text-left">
+                            <h2
+                                ref={sectionRefs.features}
+                                data-section="features"
+                                className={`text-4xl sm:text-5xl md:text-6xl font-black text-black mb-3 transition-all duration-1000 ${
+                                    visibleSections.features ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                                }`}
+                                style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+                            >
+                                Fitur Unggulan
+                            </h2>
+                            <p className="text-black/80 font-bold text-base sm:text-lg">
+                                Didesain untuk memudahkan kolaborasi keuangan tanpa kerumitan
+                            </p>
+                        </div>
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                             {/* Feature Card 1 */}
                             <div
                                 ref={sectionRefs.feature1}
                                 data-section="feature1"
-                                className={`border-2 border-black rounded-3xl p-6 sm:p-8 hover:shadow-xl transition-all duration-1000 hover:-translate-y-2 bg-transparent ${
+                                className={`bg-white border-2 border-black rounded-3xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 ${
                                     visibleSections.feature1 ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                                 }`}
                             >
-                                <div className="w-12 h-12 bg-[#7c98ff] rounded-full flex items-center justify-center mb-6">
-                                    <RealTimeIcon />
+                                <div className="w-12 h-12 bg-[#7c98ff] rounded-2xl border-2 border-black flex items-center justify-center mb-6 shadow-[2px_2px_0px_0px_#000]">
+                                    <Clock size={22} className="text-black" />
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-serif font-bold text-black mb-4">
-                                    Pelacakan Keuangan Real-time
+                                <h3 className="text-xl sm:text-2xl font-black text-black mb-3">
+                                    Pelacakan Real-time
                                 </h3>
-                                <p className="text-black text-sm sm:text-base leading-relaxed">
-                                    Pantau arus kas kelompok secara real-time dengan akses multi-user.
-                                    Cocok untuk pengelolaan keuangan keluarga, iuran komunitas, atau kas organisasi.
+                                <p className="text-black/80 text-sm sm:text-base font-medium leading-relaxed mb-4">
+                                    Pantau arus kas kelompok secara langsung dengan akses multi-user. Cocok untuk kas organisasi, uang kas kantor, atau keuangan rumah tangga.
                                 </p>
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Kas RT</span>
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Iuran Komunitas</span>
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Budget Keluarga</span>
+                                <div className="flex flex-wrap gap-2 pt-2 border-t-2 border-black/10">
+                                    <span className="bg-[#C8F5C8] text-black border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Kas RT</span>
+                                    <span className="bg-[#C8F5C8] text-black border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Iuran Komunitas</span>
+                                    <span className="bg-[#C8F5C8] text-black border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Budget Keluarga</span>
                                 </div>
                             </div>
 
@@ -332,24 +402,23 @@ export default function Welcome({ auth }) {
                             <div
                                 ref={sectionRefs.feature2}
                                 data-section="feature2"
-                                className={`border-2 border-black rounded-3xl p-6 sm:p-8 hover:shadow-xl transition-all duration-1000 delay-200 hover:-translate-y-2 bg-transparent ${
+                                className={`bg-white border-2 border-black rounded-3xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 delay-100 ${
                                     visibleSections.feature2 ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                                 }`}
                             >
-                                <div className="w-12 h-12 bg-[#7c98ff] rounded-full flex items-center justify-center mb-6">
-                                    <BudgetIcon />
+                                <div className="w-12 h-12 bg-[#FDBB4E] rounded-2xl border-2 border-black flex items-center justify-center mb-6 shadow-[2px_2px_0px_0px_#000]">
+                                    <BarChart3 size={22} className="text-black" />
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-serif font-bold text-black mb-4">
+                                <h3 className="text-xl sm:text-2xl font-black text-black mb-3">
                                     Anggaran Kolaboratif
                                 </h3>
-                                <p className="text-black text-sm sm:text-base leading-relaxed">
-                                    Buat dan kelola anggaran bersama dengan fitur approval system.
-                                    Sempurna untuk perencanaan keuangan tim, event organisasi, atau pengeluaran rumah tangga.
+                                <p className="text-black/80 text-sm sm:text-base font-medium leading-relaxed mb-4">
+                                    Buat dan kelola target anggaran bersama dengan sistem approval transparan. Sempurna untuk event planning dan biaya project.
                                 </p>
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Event Planning</span>
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Budget Project</span>
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Rumah Tangga</span>
+                                <div className="flex flex-wrap gap-2 pt-2 border-t-2 border-black/10">
+                                    <span className="bg-[#FDBB4E] text-black border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Event Planning</span>
+                                    <span className="bg-[#FDBB4E] text-black border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Budget Project</span>
+                                    <span className="bg-[#FDBB4E] text-black border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Rumah Tangga</span>
                                 </div>
                             </div>
 
@@ -357,60 +426,67 @@ export default function Welcome({ auth }) {
                             <div
                                 ref={sectionRefs.feature3}
                                 data-section="feature3"
-                                className={`border-2 border-black rounded-3xl p-6 sm:p-8 hover:shadow-xl transition-all duration-1000 delay-300 hover:-translate-y-2 bg-transparent ${
+                                className={`bg-white border-2 border-black rounded-3xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 delay-200 ${
                                     visibleSections.feature3 ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                                 }`}
                             >
-                                <div className="w-12 h-12 bg-[#7c98ff] rounded-full flex items-center justify-center mb-6">
-                                    <AnalyticsIcon />
+                                <div className="w-12 h-12 bg-[#FF6B7A] rounded-2xl border-2 border-black flex items-center justify-center mb-6 shadow-[2px_2px_0px_0px_#000]">
+                                    <LineChart size={22} className="text-black" />
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-serif font-bold text-black mb-4">
+                                <h3 className="text-xl sm:text-2xl font-black text-black mb-3">
                                     Laporan & Analytics
                                 </h3>
-                                <p className="text-black text-sm sm:text-base leading-relaxed">
-                                    Dapatkan insight mendalam dengan laporan visual yang dapat disesuaikan.
-                                    Analisis pola pengeluaran kelompok dan buat keputusan finansial yang lebih cerdas.
+                                <p className="text-black/80 text-sm sm:text-base font-medium leading-relaxed mb-4">
+                                    Dapatkan wawasan mendalam dengan visualisasi tren keuangan. Analisis pola pengeluaran kelompok secara cerdas dan akurat.
                                 </p>
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Laporan Bulanan</span>
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Analisis Trend</span>
-                                    <span className="bg-[#ffff]/70 text-[#4c72ff] px-2 py-1 rounded-full text-xs">Export Data</span>
+                                <div className="flex flex-wrap gap-2 pt-2 border-t-2 border-black/10">
+                                    <span className="bg-[#FF6B7A] text-white border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Laporan Bulanan</span>
+                                    <span className="bg-[#FF6B7A] text-white border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Analisis Tren</span>
+                                    <span className="bg-[#FF6B7A] text-white border border-black px-2.5 py-1 rounded-full text-xs font-black shadow-[1px_1px_0px_0px_#000]">Export Data</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Additional Use Cases */}
-                        <div className="mt-16 sm:mt-20 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="mt-14 sm:mt-18 grid md:grid-cols-2 lg:grid-cols-4 gap-5">
                             {[
                                 {
                                     title: 'Pasangan & Keluarga',
-                                    desc: 'Kelola keuangan rumah tangga dengan transparansi',
-                                    icon: <FamilyIcon />
+                                    desc: 'Kelola keuangan rumah tangga dengan transparansi penuh',
+                                    icon: <Users size={20} className="text-black" />,
+                                    color: '#c5ffbc'
                                 },
                                 {
                                     title: 'Organisasi & Komunitas',
-                                    desc: 'Manage kas, iuran, dan dana kegiatan',
-                                    icon: <OrganizationIcon />
+                                    desc: 'Kelola kas, iuran anggota, dan dana operasional',
+                                    icon: <Building2 size={20} className="text-black" />,
+                                    color: '#7c98ff'
                                 },
                                 {
                                     title: 'Startup & Tim',
-                                    desc: 'Tracking pengeluaran tim dan project budget',
-                                    icon: <StartupIcon />
+                                    desc: 'Tracking pengeluaran tim dan operasional project',
+                                    icon: <Zap size={20} className="text-black" />,
+                                    color: '#FDBB4E'
                                 },
                                 {
                                     title: 'Roommates',
-                                    desc: 'Bagikan biaya sewa dan kebutuhan bersama',
-                                    icon: <RoommatesIcon />
+                                    desc: 'Bagikan biaya sewa dan kebutuhan hidup bersama',
+                                    icon: <Home size={20} className="text-black" />,
+                                    color: '#FF6B7A'
                                 }
                             ].map((item, index) => (
-                                <div key={index} className="text-center p-6 bg-white/50 rounded-2xl border border-black/20 hover:shadow-lg transition-all duration-300">
-                                    <div className="w-12 h-12 bg-[#7c98ff] rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <div className="text-white">
-                                            {item.icon}
-                                        </div>
+                                <div
+                                    key={index}
+                                    className="text-center p-6 bg-white rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-[6px_6px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200"
+                                >
+                                    <div
+                                        className="w-12 h-12 rounded-2xl border-2 border-black flex items-center justify-center mx-auto mb-4 shadow-[2px_2px_0px_0px_#000]"
+                                        style={{ background: item.color }}
+                                    >
+                                        {item.icon}
                                     </div>
-                                    <h4 className="font-bold text-black mb-2">{item.title}</h4>
-                                    <p className="text-black text-sm">{item.desc}</p>
+                                    <h4 className="font-black text-black mb-1.5 text-base">{item.title}</h4>
+                                    <p className="text-black/70 text-xs font-bold leading-relaxed">{item.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -421,160 +497,103 @@ export default function Welcome({ auth }) {
                 <section
                     ref={sectionRefs.cta}
                     data-section="cta"
-                    className="bg-[#7c98ff] px-4 sm:px-6 lg:px-20 py-16 sm:py-20"
+                    className="bg-[#7c98ff] px-4 sm:px-6 lg:px-20 py-16 sm:py-20 border-b-2 border-black"
                 >
                     <div className={`max-w-4xl mx-auto text-center transition-all duration-1000 ${
                         visibleSections.cta ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                     }`}>
-                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
-                            <CollaborationIcon />
+                        <div className="w-16 h-16 bg-white rounded-2xl border-2 border-black flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_#000]">
+                            <Star size={28} className="text-black fill-[#FDBB4E]" />
                         </div>
-                        <h2 className="text-4xl sm:text-5xl font-serif font-normal text-white mb-6">
+                        <h2
+                            className="text-4xl sm:text-5xl font-black text-black mb-5"
+                            style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
+                        >
                             Siap Mengelola Keuangan Kelompok Anda?
                         </h2>
-                        <p className="text-white text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
-                            Bergabung dengan ribuan kelompok yang telah mempercayai kami untuk pengelolaan keuangan yang lebih baik.
+                        <p className="text-black font-bold text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
+                            Bergabung dengan ribuan kelompok yang telah mempercayai kami untuk pencatatan keuangan yang transparan dan aman.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link
                                 href={auth?.user ? "/dashboard" : "/register"}
-                                className="bg-white text-[#7c98ff] px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl"
+                                className="bg-black text-white px-8 py-4 rounded-2xl font-black text-lg border-2 border-black shadow-[5px_5px_0px_0px_#444] hover:shadow-[7px_7px_0px_0px_#444] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
                             >
-                                {auth?.user ? "Buka Dashboard" : "Daftar Sekarang"}
+                                {auth?.user ? "Buka Dashboard" : "Daftar Sekarang"} <ArrowUpRight size={20} />
                             </Link>
                             <Link
-                                href="/coming-soon"
-                                className="bg-transparent text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white hover:bg-white hover:text-[#7c98ff] transition-all duration-300"
+                                href="/coming-soon?feature=learn"
+                                className="bg-[#c5ffbc] text-black px-8 py-4 rounded-2xl font-black text-lg border-2 border-black shadow-[5px_5px_0px_0px_#000] hover:shadow-[7px_7px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
                             >
-                                Pelajari Fitur
+                                Pelajari Fitur <ChevronRight size={20} />
                             </Link>
                         </div>
                     </div>
                 </section>
 
                 {/* Footer */}
-                <footer className="bg-[#4c72ff] px-4 sm:px-6 lg:px-20 py-12 sm:py-16">
+                <footer className="bg-black text-white px-4 sm:px-6 lg:px-20 py-12 sm:py-16">
                     <div className="max-w-7xl w-full mx-auto">
                         <div className="grid md:grid-cols-4 gap-8 sm:gap-12 mb-8">
                             {/* Column 1 - Brand */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                                        <span className="text-[#4c72ff] font-bold text-xl">G</span>
-                                    </div>
-                                    <h3 className="text-white font-bold text-lg tracking-wide">
-                                        GROUP FINANCES
-                                    </h3>
-                                </div>
-                                <p className="text-white text-sm leading-relaxed">
+                                <Logo size="md" href="/" inverted={true} showBadge={false} />
+                                <p className="text-white/70 text-sm leading-relaxed font-medium">
                                     Platform manajemen keuangan kolaboratif untuk berbagai jenis kelompok. Transparan, mudah, dan terpercaya.
                                 </p>
                             </div>
 
                             {/* Column 2 - Product */}
-                            <div className="space-y-4">
-                                <h4 className="text-white font-bold text-lg">Produk</h4>
-                                <ul className="space-y-2">
-                                    <li>
-                                        <a href="#" className="text-white hover:text-gray-200 text-sm transition-colors">
-                                            Fitur
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="text-white hover:text-gray-200 text-sm transition-colors">
-                                            Harga
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="text-white hover:text-gray-200 text-sm transition-colors">
-                                            Use Cases
-                                        </a>
-                                    </li>
+                            <div className="space-y-3">
+                                <h4 className="text-white font-black text-base uppercase tracking-wider">Produk</h4>
+                                <ul className="space-y-2 text-sm font-semibold text-white/70">
+                                    <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
+                                    <li><Link href="/transactions" className="hover:text-white transition-colors">Transaksi</Link></li>
+                                    <li><Link href="/relations" className="hover:text-white transition-colors">Hubungan Grup</Link></li>
                                 </ul>
                             </div>
 
                             {/* Column 3 - Company */}
-                            <div className="space-y-4">
-                                <h4 className="text-white font-bold text-lg">Perusahaan</h4>
-                                <ul className="space-y-2">
-                                    <li>
-                                        <a href="#" className="text-white hover:text-gray-200 text-sm transition-colors">
-                                            Tentang Kami
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="text-white hover:text-gray-200 text-sm transition-colors">
-                                            Blog
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="text-white hover:text-gray-200 text-sm transition-colors">
-                                            Karir
-                                        </a>
-                                    </li>
+                            <div className="space-y-3">
+                                <h4 className="text-white font-black text-base uppercase tracking-wider">Perusahaan</h4>
+                                <ul className="space-y-2 text-sm font-semibold text-white/70">
+                                    <li><a href="#" className="hover:text-white transition-colors">Tentang Kami</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors">Kebijakan Privasi</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors">Syarat & Ketentuan</a></li>
                                 </ul>
                             </div>
 
                             {/* Column 4 - Contact */}
-                            <div className="space-y-4">
-                                <h4 className="text-white font-bold text-lg">Hubungi Kami</h4>
-                                <ul className="space-y-2">
-                                    <li className="text-white text-sm">
-                                        Email: info@groupfinances.com
-                                    </li>
-                                    <li className="text-white text-sm">
-                                        Telepon: +62 123 4567 890
-                                    </li>
-                                    <li className="text-white text-sm">
-                                        WhatsApp: +62 812 3456 7890
-                                    </li>
+                            <div className="space-y-3">
+                                <h4 className="text-white font-black text-base uppercase tracking-wider">Hubungi Kami</h4>
+                                <ul className="space-y-2 text-sm font-semibold text-white/70">
+                                    <li>Email: info@groupfinances.com</li>
+                                    <li>Telepon: +62 123 4567 890</li>
+                                    <li>WhatsApp: +62 812 3456 7890</li>
                                 </ul>
                             </div>
                         </div>
 
                         {/* Copyright */}
-                        <div className="border-t-2 border-white pt-6">
-                            <p className="text-center text-white text-sm">
-                                © 2025 Group Finances. All rights reserved. - Solusi untuk Pasangan, Keluarga, Organisasi, dan Komunitas
+                        <div className="border-t border-white/20 pt-6">
+                            <p className="text-center text-white/60 text-xs font-bold">
+                                © 2026 Group Finances. All rights reserved. Solusi keuangan kolaboratif untuk Pasangan, Keluarga, Organisasi, dan Komunitas.
                             </p>
                         </div>
                     </div>
                 </footer>
 
-                {/* Scroll to Top Button - Changed from bottom-1/4 to bottom-8 (1/8 from bottom) */}
+                {/* Scroll to Top Button */}
                 <button
                     onClick={scrollToTop}
-                    className={`fixed right-8 bottom-8 bg-[#7c98ff] text-white p-4 rounded-full shadow-lg hover:bg-[#4c72ff] transition-all duration-300 z-50 hover:scale-110 ${
+                    className={`fixed right-6 bottom-6 bg-white text-black p-3.5 rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all z-50 cursor-pointer ${
                         showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
                     }`}
                     aria-label="Scroll to top"
                 >
-                    <ScrollToTopIcon />
+                    <ArrowUp size={20} className="text-black" />
                 </button>
             </div>
-
-            <style jsx>{`
-                @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
-
-                h2, h3 {
-                    font-family: 'Libre Baskerville', serif;
-                }
-
-                body {
-                    font-family: 'Inter', sans-serif;
-                }
-
-                @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-            `}</style>
         </>
     );
 }

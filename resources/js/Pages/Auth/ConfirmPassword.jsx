@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import Logo from '@/Layouts/Logo';
 
 export default function ConfirmPassword() {
     const [isVisible, setIsVisible] = useState(false);
@@ -40,14 +41,7 @@ export default function ConfirmPassword() {
             <div className="min-h-screen bg-[#C8F5C8] flex flex-col overflow-x-hidden">
                 {/* Header/Logo */}
                 <header className="px-4 sm:px-6 lg:px-20 pt-6 sm:pt-8 pb-4">
-                    <Link href="/" className="flex items-center gap-2 w-fit">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-xl sm:text-2xl">G</span>
-                        </div>
-                        <h1 className="text-black font-bold text-lg sm:text-xl md:text-2xl tracking-wide">
-                            GROUP FINANCES
-                        </h1>
-                    </Link>
+                    <Logo size="lg" href="/" showBadge={true} />
                 </header>
 
                 {/* Main Content */}

@@ -1,3 +1,214 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&family=Libre+Baskerville:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Neobrutalism Design System (Welcome.jsx & RelationsPage.jsx) ── */
+    --nb-bg:          #C8F5C8;   /* hijau muda signature */
+    --nb-bg-alt:      #c5ffbc;   /* hijau cerah */
+    --nb-surface:     #FFFFFF;   /* putih bersih */
+    --nb-blue:        #7c98ff;   /* biru primer neobrutalism */
+    --nb-blue-dark:   #5B7FF0;   /* biru hover */
+    --nb-yellow:      #FDBB4E;   /* kuning aksen / saldo */
+    --nb-yellow-bright: #FFE600; /* kuning neobrutalism */
+    --nb-teal:        #4FD1C5;   /* teal / pemasukan */
+    --nb-coral:       #FF6B7A;   /* coral / pengeluaran */
+    --nb-black:       #000000;   /* hitam solid */
+    --nb-border:      #000000;   /* border hitam tegas */
+    --nb-shadow:      4px 4px 0px 0px #000000; /* signature neobrutal shadow */
+    --nb-shadow-sm:   2px 2px 0px 0px #000000;
+    --nb-shadow-lg:   6px 6px 0px 0px #000000;
+
+    /* ── Legacy Clay variables (backward compatibility) ── */
+    --clay-bg: #E7E9FA;
+    --clay-surface: #F5F6FC;
+    --clay-white: #FFFFFF;
+    --clay-blue: #5B7FF0;
+    --clay-blue-light: #8FA6F5;
+    --clay-blue-dark: #4A68CC;
+    --clay-purple: #8C7EF0;
+    --clay-yellow: #FDBB4E;
+    --clay-coral: #FF6B7A;
+    --clay-teal: #4FD1C5;
+    --clay-text-dark: #000000;
+    --clay-text-muted: #555555;
+    --clay-shadow-dark: rgba(0, 0, 0, 0.15);
+    --clay-shadow-light: rgba(255, 255, 255, 0.9);
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    color: #000000;
+  }
+}
+
+@layer utilities {
+  /* ── Neobrutalism Utilities ──────────────────── */
+
+  /* Neobrutalist Card */
+  .nb-card {
+    background-color: #FFFFFF;
+    border: 2px solid #000000;
+    border-radius: 1.25rem;
+    box-shadow: 4px 4px 0px 0px #000000;
+    transition: all 0.2s ease-in-out;
+  }
+  .nb-card:hover {
+    box-shadow: 6px 6px 0px 0px #000000;
+    transform: translate(-2px, -2px);
+  }
+
+  /* Neobrutalist Card Static (tanpa hover lift) */
+  .nb-card-static {
+    background-color: #FFFFFF;
+    border: 2px solid #000000;
+    border-radius: 1.25rem;
+    box-shadow: 4px 4px 0px 0px #000000;
+  }
+
+  /* Neobrutalist Small Card / Badge */
+  .nb-card-sm {
+    background-color: #FFFFFF;
+    border: 1.5px solid #000000;
+    border-radius: 0.75rem;
+    box-shadow: 2px 2px 0px 0px #000000;
+  }
+
+  /* Neobrutalist Primary Button (Biru) */
+  .nb-btn-primary {
+    background-color: #7c98ff;
+    color: #000000;
+    font-weight: 700;
+    border: 2px solid #000000;
+    border-radius: 9999px;
+    box-shadow: 3px 3px 0px 0px #000000;
+    transition: all 0.15s ease-in-out;
+  }
+  .nb-btn-primary:hover {
+    background-color: #6a88fc;
+    box-shadow: 4px 4px 0px 0px #000000;
+    transform: translate(-1px, -1px);
+  }
+  .nb-btn-primary:active {
+    box-shadow: 0px 0px 0px 0px #000000;
+    transform: translate(2px, 2px);
+  }
+
+  /* Neobrutalist White Button */
+  .nb-btn-white {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-weight: 700;
+    border: 2px solid #000000;
+    border-radius: 9999px;
+    box-shadow: 3px 3px 0px 0px #000000;
+    transition: all 0.15s ease-in-out;
+  }
+  .nb-btn-white:hover {
+    background-color: #F4F4F0;
+    box-shadow: 4px 4px 0px 0px #000000;
+    transform: translate(-1px, -1px);
+  }
+  .nb-btn-white:active {
+    box-shadow: 0px 0px 0px 0px #000000;
+    transform: translate(2px, 2px);
+  }
+
+  /* Neobrutalist Black Button */
+  .nb-btn-black {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-weight: 700;
+    border: 2px solid #000000;
+    border-radius: 9999px;
+    box-shadow: 3px 3px 0px 0px #000000;
+    transition: all 0.15s ease-in-out;
+  }
+  .nb-btn-black:hover {
+    background-color: #222222;
+    box-shadow: 4px 4px 0px 0px #000000;
+    transform: translate(-1px, -1px);
+  }
+  .nb-btn-black:active {
+    box-shadow: 0px 0px 0px 0px #000000;
+    transform: translate(2px, 2px);
+  }
+
+  /* Neobrutalist Pill Tag / Chip */
+  .nb-chip {
+    border: 1.5px solid #000000;
+    border-radius: 9999px;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    box-shadow: 1.5px 1.5px 0px 0px #000000;
+  }
+
+  /* Neobrutalist Input */
+  .nb-input {
+    background-color: #FFFFFF;
+    border: 2px solid #000000;
+    border-radius: 0.75rem;
+    color: #000000;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+  }
+  .nb-input:focus {
+    outline: none;
+    box-shadow: 3px 3px 0px 0px #000000;
+  }
+
+  /* ── Legacy Aliases to prevent breaks ───────────────── */
+  .wf-card {
+    background: #FFFFFF;
+    border: 2px solid #000000;
+    border-radius: 1.25rem;
+    box-shadow: 4px 4px 0px 0px #000000;
+    transition: all 0.2s ease-in-out;
+  }
+  .wf-card:hover {
+    box-shadow: 6px 6px 0px 0px #000000;
+    transform: translate(-2px, -2px);
+  }
+  .wf-card-bold {
+    background: #FFFFFF;
+    border: 2px solid #000000;
+    border-radius: 1.5rem;
+    box-shadow: 4px 4px 0px 0px #000000;
+  }
+  .wf-btn-solid {
+    background: #000000;
+    color: #FFFFFF;
+    border: 2px solid #000000;
+    border-radius: 9999px;
+    box-shadow: 3px 3px 0px 0px #000000;
+  }
+  .wf-btn-blue {
+    background: #7c98ff;
+    color: #000000;
+    border: 2px solid #000000;
+    border-radius: 9999px;
+    box-shadow: 3px 3px 0px 0px #000000;
+  }
+  .wf-btn-outline {
+    background: #FFFFFF;
+    color: #000000;
+    border: 2px solid #000000;
+    border-radius: 9999px;
+    box-shadow: 3px 3px 0px 0px #000000;
+  }
+  .wf-chip {
+    border: 1.5px solid #000000;
+    border-radius: 9999px;
+    box-shadow: 1.5px 1.5px 0px 0px #000000;
+  }
+
+  /* ── Clay Utilities (preserved) ─────────────────────── */
+  .clay-card, .clay-card-flat, .clay-card-interactive, .clay-button, .clay-button-primary {
+    border: 2px solid #000000;
+    box-shadow: 3px 3px 0px 0px #000000;
+  }
+}

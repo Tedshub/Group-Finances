@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import Logo from '@/Layouts/Logo';
 
 export default function ComingSoonPage({
     title = "Segera Hadir",
@@ -69,14 +70,7 @@ export default function ComingSoonPage({
 
             {/* Header/Logo */}
             <header className="px-4 sm:px-6 lg:px-20 pt-2 pb-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-xl sm:text-2xl">G</span>
-                    </div>
-                    <h1 className="text-black font-bold text-lg sm:text-xl md:text-2xl tracking-wide">
-                        GROUP FINANCES
-                    </h1>
-                </div>
+                <Logo size="lg" href="/" showBadge={true} />
             </header>
 
             {/* Main Content */}
@@ -220,13 +214,8 @@ export default function ComingSoonPage({
             {/* Footer */}
             <footer className="bg-[#4c72ff] px-4 sm:px-6 lg:px-20 py-8 sm:py-12 mt-12">
                 <div className="max-w-7xl w-full mx-auto text-center">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                            <span className="text-[#4c72ff] font-bold text-xl">G</span>
-                        </div>
-                        <h3 className="text-white font-bold text-lg tracking-wide">
-                            GROUP FINANCES
-                        </h3>
+                    <div className="flex justify-center mb-4">
+                        <Logo size="md" href="/" inverted={true} showBadge={false} />
                     </div>
                     <p className="text-white text-sm mb-4">
                         Platform manajemen keuangan kolaboratif untuk berbagai jenis kelompok.

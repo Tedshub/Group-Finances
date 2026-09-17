@@ -34,6 +34,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'avatar',
     ];
 
     protected $hidden = [
@@ -45,6 +46,18 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+        return route('user.avatar', ['user' => $this->id]);
+    }
 
     // ========== Constants untuk Role ==========
     const ROLE_ADMIN = 'admin';
@@ -66,7 +79,7 @@ class User extends Authenticatable
             'relation_id'
         )
         ->using(UserRelation::class)
-        ->withPivot('is_owner', 'join_at')
+        ->withPivot('is_owner', 'join_at', 'notification_prefs')
         ->withTimestamps()
         ->orderByPivot('is_owner', 'desc')
         ->orderByPivot('join_at', 'asc');
@@ -90,6 +103,36 @@ class User extends Authenticatable
     public function memberRelations(): BelongsToMany
     {
         return $this->relations()->wherePivot('is_owner', false);
+    }
+
+    /**
+     * Pesan yang dikirim oleh user
+     *
+     * @return HasMany
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'user_id');
+    }
+
+    /**
+     * Status baca pesan oleh user
+     *
+     * @return HasMany
+     */
+    public function messageReads(): HasMany
+    {
+        return $this->hasMany(MessageRead::class, 'user_id');
+    }
+
+    /**
+     * Reactions yang diberikan user
+     *
+     * @return HasMany
+     */
+    public function messageReactions(): HasMany
+    {
+        return $this->hasMany(MessageReaction::class, 'user_id');
     }
 
     // ========== Role Methods ==========

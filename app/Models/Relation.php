@@ -18,11 +18,15 @@ class Relation extends Model
         'nama',
         'deskripsi',
         'creator_id',
+        'last_message_at',
+        'settings',
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'created_at'     => 'datetime',
+        'updated_at'     => 'datetime',
+        'last_message_at'=> 'datetime',
+        'settings'       => 'array',
     ];
 
     // ========== Relationships ==========
@@ -52,7 +56,7 @@ class Relation extends Model
             'user_id'
         )
         ->using(UserRelation::class)
-        ->withPivot('is_owner', 'join_at')
+        ->withPivot('is_owner', 'join_at', 'notification_prefs')
         ->withTimestamps()
         ->orderByPivot('is_owner', 'desc')
         ->orderByPivot('join_at', 'asc');
@@ -76,6 +80,26 @@ class Relation extends Model
     public function members(): BelongsToMany
     {
         return $this->users()->wherePivot('is_owner', false);
+    }
+
+    /**
+     * Pesan-pesan dalam relation ini
+     *
+     * @return HasMany
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'relation_id');
+    }
+
+    /**
+     * Pesan terakhir dalam relation ini
+     *
+     * @return HasMany
+     */
+    public function lastMessage()
+    {
+        return $this->hasOne(Message::class, 'relation_id')->latest();
     }
 
     // ========== Helper Methods ==========
@@ -135,6 +159,16 @@ class Relation extends Model
     }
 
     /**
+     * Update last_message_at saat ada pesan baru
+     *
+     * @return void
+     */
+    public function updateLastMessageAt(): void
+    {
+        $this->update(['last_message_at' => now()]);
+    }
+
+    /**
      * Boot method untuk auto-generate kode
      */
     protected static function boot()
@@ -177,6 +211,30 @@ class Relation extends Model
         return $this->joinRequests()
             ->where('status', RelationJoinRequest::STATUS_PENDING)
             ->count();
+    }
+
+    /**
+     * Target tabungan di relation ini
+     */
+    public function savingsGoals(): HasMany
+    {
+        return $this->hasMany(\App\Models\SavingsGoal::class, 'relation_id');
+    }
+
+    /**
+     * Anggaran di relation ini
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(\App\Models\Budget::class, 'relation_id');
+    }
+
+    /**
+     * Kategori custom di relation ini
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(\App\Models\Category::class, 'relation_id');
     }
 
     /**
@@ -233,5 +291,13 @@ class Relation extends Model
     public function getStatistikTransaksi(): array
     {
         return Transaction::getStatistik($this->id);
+    }
+
+    /**
+     * Scope untuk mengurutkan berdasarkan pesan terbaru
+     */
+    public function scopeWithLatestMessage($query)
+    {
+        return $query->orderByDesc('last_message_at');
     }
 }

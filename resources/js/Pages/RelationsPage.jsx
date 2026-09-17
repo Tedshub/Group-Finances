@@ -2,19 +2,20 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { Plus } from 'lucide-react';
-import Sidebar from "../../Layouts/Sidebar";
-import NavbarIn from "../../Layouts/NavbarIn";
-import RelationTabs from "../../Components/Relation/RelationTabs";
-import RelationList from "../../Components/Relation/RelationList";
-import CreateRelationModal from "../../Components/Relation/Modals/CreateRelationModal";
-import RelationJoinForm from "../../Components/Relation/RelationJoinForm";
-import PendingRequestsList from "../../Components/Relation/PendingRequestsList";
-import ConfirmationModal from "../../Components/Relation/Modals/ConfirmationModal";
-import SuccessModal from "../../Components/Relation/Modals/SuccessModal";
-import MembersModal from "../../Components/Relation/Modals/MembersModal";
-import SuccessToast from "../../Components/Relation/SuccessToast";
-import ErrorAlert from "../../Components/Relation/ErrorAlert";
-import RelationSearch from "../../Components/Relation/RelationSearch";
+import Sidebar from "@/Layouts/Sidebar";
+import NavbarIn from "@/Layouts/NavbarIn";
+import RelationTabs from "@/Components/Relation/RelationTabs";
+import RelationList from "@/Components/Relation/RelationList";
+import CreateRelationModal from "@/Components/Relation/Modals/CreateRelationModal";
+import RelationJoinForm from "@/Components/Relation/RelationJoinForm";
+import PendingRequestsList from "@/Components/Relation/PendingRequestsList";
+import ConfirmationModal from "@/Components/Relation/Modals/ConfirmationModal";
+import SuccessModal from "@/Components/Relation/Modals/SuccessModal";
+import MembersModal from "@/Components/Relation/Modals/MembersModal";
+import SuccessToast from "@/Components/Relation/SuccessToast";
+import ErrorAlert from "@/Components/Relation/ErrorAlert";
+import RelationSearch from "@/Components/Relation/RelationSearch";
+
 
 export default function RelationsPage({
   auth,
@@ -226,16 +227,26 @@ const handleCreate = (e) => {
   };
 
   const handleJoin = () => {
+    setJoinError('');
     router.post(route('relations.join'), { kode: joinKode }, {
+      preserveScroll: true,
       onSuccess: (page) => {
+        if (page.props.flash?.error) {
+          setJoinError(page.props.flash.error);
+          return;
+        }
+        if (page.props.flash?.warning) {
+          setJoinError(page.props.flash.warning);
+          return;
+        }
         setJoinSuccess(true);
-        setJoinSuccessMessage(page.props.flash.success || 'Permintaan bergabung berhasil dikirim');
+        setJoinSuccessMessage(page.props.flash?.success || 'Permintaan bergabung berhasil dikirim');
         setJoinKode('');
         setSearchResult(null);
         sessionStorage.removeItem('relationsPageRefreshed');
       },
       onError: (errors) => {
-        setJoinError(errors.kode || 'Terjadi kesalahan saat mengirim permintaan');
+        setJoinError(errors.kode || errors.message || 'Terjadi kesalahan saat mengirim permintaan');
       }
     });
   };
@@ -420,28 +431,34 @@ const handleCreate = (e) => {
 
   return (
     <>
-      <Head title="Hubungan - Couple's Finances" />
-      <div className="min-h-screen h-screen flex flex-col bg-white text-gray-900">
+      <Head title="Hubungan Grup - Group Finances" />
+      <div className="min-h-screen h-screen flex flex-col bg-[#C8F5C8] text-black">
         <NavbarIn auth={auth} />
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 min-w-0">
+          <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 lg:px-10 lg:py-8 min-w-0">
             {/* Header with Button */}
-            <div className="mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-black mb-1">
-                Hubungan Keuangan
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <p className="text-gray-600 text-sm">Kelola hubungan keuangan dengan pasangan atau keluarga</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full border border-black font-bold transition-all shadow-lg text-sm touch-manipulation whitespace-nowrap sm:ml-auto"
+            <div className="mb-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1
+                  className="text-3xl lg:text-4xl font-serif font-black text-black leading-tight"
+                  style={{ fontFamily: "'DM Serif Display', 'Libre Baskerville', serif" }}
                 >
-                  <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Tambah Hubungan Baru</span>
-                  <span className="sm:hidden">Tambah</span>
-                </button>
+                  Hubungan Keuangan
+                </h1>
+                <p className="text-black/70 text-sm mt-1 font-bold">
+                  Kelola hubungan keuangan bersama pasangan, keluarga, atau komunitas Anda
+                </p>
               </div>
+
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center justify-center gap-2 bg-[#7c98ff] hover:bg-[#6a88fc] text-black px-5 py-2.5 rounded-full border-2 border-black font-black text-xs sm:text-sm shadow-[2px_2px_0px_0px_#000] hover:shadow-[3px_3px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all touch-manipulation whitespace-nowrap sm:ml-auto cursor-pointer"
+              >
+                <Plus size={16} className="stroke-[3]" />
+                <span className="hidden sm:inline">Tambah Hubungan Baru</span>
+                <span className="sm:hidden">Tambah</span>
+              </button>
             </div>
 
             {/* Success Toast */}

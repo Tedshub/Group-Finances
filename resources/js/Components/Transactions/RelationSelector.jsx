@@ -9,20 +9,16 @@ export default function RelationSelector({
   onAddTransaction
 }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 border border-black">
+    <div className="bg-white rounded-2xl border-2 border-black p-5 mb-6 shadow-[4px_4px_0px_0px_#000]">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div className="flex-1 w-full md:w-auto">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-black text-black uppercase tracking-widest mb-2">
             Pilih Hubungan Keuangan
           </label>
           <select
             value={selectedRelationId}
             onChange={onChange}
-            className="w-full md:w-96 px-4 py-2
-                       border border-black rounded-lg
-                       focus:ring-1 focus:ring-[#15803d]
-                       focus:border-[#C8F5C8]"
-            style={{ backgroundColor: '#ffff' }}
+            className="w-full md:w-96 px-4 py-2.5 border-2 border-black rounded-xl font-bold text-black bg-white focus:outline-none focus:ring-2 focus:ring-black shadow-[2px_2px_0px_0px_#000] transition-all"
           >
             <option value="">-- Pilih Hubungan --</option>
             {relations.map((relation) => (
@@ -35,10 +31,10 @@ export default function RelationSelector({
 
         <button
           onClick={onAddTransaction}
-          className="w-full md:w-auto px-6 py-2 bg-[#C8F5C8] text-black rounded-lg hover:bg-[#b8e5b8] transition-colors flex items-center justify-center gap-2 border border-black"
+          className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#7c98ff] hover:bg-[#6a88fc] text-black font-black rounded-full border-2 border-black shadow-[3px_3px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
           </svg>
           Tambah Transaksi
         </button>
